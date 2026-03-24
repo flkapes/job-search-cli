@@ -5,7 +5,7 @@ from __future__ import annotations
 from textual.app import ComposeResult
 from textual.containers import Vertical, VerticalScroll
 from textual.widget import Widget
-from textual.widgets import Label, Markdown, Static
+from textual.widgets import Label, Markdown, Static, TextArea
 
 from codepractice.core.models import Problem
 from codepractice.utils.text_utils import difficulty_badge
@@ -71,6 +71,8 @@ class ProblemCard(Widget):
             yield Markdown("", id="p-description")
             yield Static("", id="p-examples")
             yield Static("", id="p-hints-area")
+            yield Label("[dim]📝 My Notes (auto-saved)[/dim]", id="notes-label")
+            yield TextArea("", id="p-notes")
 
     def load_problem(self, problem: Problem) -> None:
         self._problem = problem
@@ -106,6 +108,14 @@ class ProblemCard(Widget):
         self.query_one("#p-examples", Static).update(examples_text)
         self.query_one("#p-hints-area", Static).update("")
 
+        # Load saved note for this problem
+        try:
+            if problem.id:
+                note = self.app.problem_repo.get_note(problem.id)
+                self.query_one("#p-notes", TextArea).load_text(note)
+        except Exception:
+            pass
+
     def show_next_hint(self) -> str | None:
         """Reveal the next hint. Returns the hint text or None if all shown."""
         if not self._problem or not self._problem.hints:
@@ -127,6 +137,14 @@ class ProblemCard(Widget):
         self.query_one("#p-hints-area", Static).update(hints_display)
         return hint
 
+    def on_text_area_changed(self, event: TextArea.Changed) -> None:
+        """Auto-save notes on every change."""
+        if event.text_area.id == "p-notes" and self._problem and self._problem.id:
+            try:
+                self.app.problem_repo.save_note(self._problem.id, event.text_area.text)
+            except Exception:
+                pass
+
     def clear_problem(self) -> None:
         self._problem = None
         self._hints_shown = 0
@@ -135,3 +153,7 @@ class ProblemCard(Widget):
         self.query_one("#p-description", Markdown).update("")
         self.query_one("#p-examples", Static).update("")
         self.query_one("#p-hints-area", Static).update("")
+        try:
+            self.query_one("#p-notes", TextArea).load_text("")
+        except Exception:
+            pass

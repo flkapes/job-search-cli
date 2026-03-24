@@ -6,6 +6,7 @@ from codepractice.core.models import Example, Problem, ProblemSource, Solution, 
 from codepractice.llm.client import LLMClient, LLMError, extract_json
 from codepractice.llm.prompts.problem_gen import (
     dsa_problem_prompt,
+    freeform_questions_prompt,
     jd_problems_prompt,
     python_fundamentals_prompt,
     resume_problems_prompt,
@@ -66,6 +67,39 @@ class ProblemGeneratorService:
         try:
             raw = self.client.chat_sync(messages, temperature=0.75)
             return self._parse_list(raw, "practical", "resume", difficulty, ProblemSource.resume_driven)
+        except (LLMError, Exception):
+            return []
+
+    def generate_freeform_questions(
+        self,
+        source: str,
+        text: str,
+        question_types: list[str],
+        count: int = 5,
+    ) -> list[dict]:
+        """
+        Generate freeform interview questions (not coding problems).
+        Returns a list of {"question": str, "type": str, "follow_ups": [str]}.
+        """
+        messages = freeform_questions_prompt(source, text, question_types, count)
+        try:
+            raw = self.client.chat_sync(messages, temperature=0.75)
+            data = extract_json(raw)
+            if not isinstance(data, list):
+                return []
+            result = []
+            for item in data:
+                if not isinstance(item, dict):
+                    continue
+                question = item.get("question", "").strip()
+                if not question:
+                    continue
+                result.append({
+                    "question": question,
+                    "type": str(item.get("type", "general")),
+                    "follow_ups": [str(f) for f in item.get("follow_ups", []) if f],
+                })
+            return result
         except (LLMError, Exception):
             return []
 

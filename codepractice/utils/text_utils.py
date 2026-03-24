@@ -58,6 +58,49 @@ def wrap_code_block(code: str, language: str = "python") -> str:
     return f"```{language}\n{code}\n```"
 
 
+def extract_optimized_solution(raw: str) -> str | None:
+    """
+    Extract the 'optimized_solution' field from AI feedback JSON.
+    Returns None if not present, empty, or unparseable.
+    """
+    if not raw:
+        return None
+    import json as _json
+    # Try to find JSON in the text
+    text = raw.strip()
+    # Look for embedded JSON object
+    for start in (text.find("{"), 0):
+        if start < 0:
+            break
+        brace_start = text.find("{", start)
+        if brace_start < 0:
+            break
+        # Find matching close brace
+        depth = 0
+        for i, ch in enumerate(text[brace_start:], brace_start):
+            if ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+                if depth == 0:
+                    try:
+                        data = _json.loads(text[brace_start : i + 1])
+                        if isinstance(data, dict):
+                            solution = data.get("optimized_solution", "")
+                            if solution and solution.strip():
+                                return strip_markdown_code_fences(solution)
+                    except (_json.JSONDecodeError, Exception):
+                        pass
+                    break
+        break
+    return None
+
+
+def should_show_diff(score: float) -> bool:
+    """Return True if a code diff should be shown (score below near-perfect threshold)."""
+    return score < 0.9
+
+
 def build_progress_bar(current: int, total: int, width: int = 20, filled: str = "█", empty: str = "░") -> str:
     if total == 0:
         return empty * width

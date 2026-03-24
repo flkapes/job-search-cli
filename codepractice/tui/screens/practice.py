@@ -89,6 +89,10 @@ class PracticeContent(Widget):
     _code_start_time: float = 0
     _hints_used: int = 0
     _review_mode: bool = False
+    _last_attempt_id: int | None = None
+    _init_session_type: str = "free"
+    _drill_category: str | None = None
+    _drill_subcategory: str | None = None
 
     def __init__(self, review_mode: bool = False, **kwargs):
         super().__init__(**kwargs)
@@ -124,6 +128,12 @@ class PracticeContent(Widget):
         with Vertical(id="phase-feedback"):
             yield Label("[bold]Evaluation[/bold]", classes="panel-title")
             yield StreamingOutput(id="feedback-stream")
+            yield Static("", id="diff-panel")
+            with Horizontal(id="rating-bar"):
+                yield Label("[dim]How hard was this for you?[/dim]  ")
+                for i in range(1, 6):
+                    yield Button(str(i), id=f"btn-rate-{i}", classes="secondary-btn")
+                yield Button("Skip", id="btn-rate-skip", classes="secondary-btn")
             with Horizontal(classes="action-bar"):
                 yield Button("Next Problem [N]", id="btn-next", classes="primary-btn")
                 yield Button("Retry", id="btn-retry", classes="secondary-btn")
@@ -140,15 +150,30 @@ class PracticeContent(Widget):
             widget = self.query_one(f"#{pid}")
             widget.display = pid == f"phase-{phase}"
         self.current_phase = phase
+        if phase == "feedback":
+            try:
+                self.query_one("#diff-panel", Static).update("")
+                self.query_one("#rating-bar").display = True
+            except Exception:
+                pass
+
+    def _hide_rating_bar(self) -> None:
+        try:
+            self.query_one("#rating-bar").display = False
+        except Exception:
+            pass
 
     def _init_session(self) -> None:
         try:
-            self._session_id = self.app.session_repo.start_session("free")
+            session_type = getattr(self, "_init_session_type", "free")
+            self._session_id = self.app.session_repo.start_session(session_type)
         except Exception:
             self._session_id = None
-        self._load_next_problem()
+        cat = getattr(self, "_drill_category", None)
+        sub = getattr(self, "_drill_subcategory", None)
+        self._load_next_problem(category=cat, subcategory=sub)
 
-    def _load_next_problem(self, category: str | None = None, difficulty: str | None = None) -> None:
+    def _load_next_problem(self, category: str | None = None, difficulty: str | None = None, subcategory: str | None = None) -> None:
         self._show_phase("loading")
         self._hints_used = 0
 
@@ -222,6 +247,16 @@ class PracticeContent(Widget):
             self._enter_coding()
         elif btn == "btn-dashboard":
             self.app._switch_content("dashboard")
+        elif btn and btn.startswith("btn-rate-") and btn != "btn-rate-skip":
+            try:
+                rating = int(btn.split("-")[-1])
+                if self._last_attempt_id:
+                    self.app.session_repo.set_difficulty_rating(self._last_attempt_id, rating)
+                self._hide_rating_bar()
+            except Exception:
+                pass
+        elif btn == "btn-rate-skip":
+            self._hide_rating_bar()
 
     def on_code_editor_code_submitted(self, event: CodeEditor.CodeSubmitted) -> None:
         self._submit_code()
@@ -264,7 +299,7 @@ class PracticeContent(Widget):
             passed = bool(score_data.get("passed", score >= 0.7)) if isinstance(score_data, dict) else score >= 0.7
 
             if self._session_id and self._problem and self._problem.id:
-                self.app.session_repo.record_attempt({
+                self._last_attempt_id = self.app.session_repo.record_attempt({
                     "session_id": self._session_id,
                     "problem_id": self._problem.id,
                     "user_code": code,
@@ -282,6 +317,23 @@ class PracticeContent(Widget):
                     update_schedule(self.app.db, self._problem.id, score)
                 except Exception:
                     pass
+
+            # Show optimized solution diff if score < 0.9
+            try:
+                from codepractice.utils.text_utils import (
+                    extract_optimized_solution,
+                    should_show_diff,
+                )
+                if should_show_diff(score) and full_text:
+                    opt = extract_optimized_solution(full_text)
+                    if opt:
+                        diff_panel = self.query_one("#diff-panel", Static)
+                        diff_panel.update(
+                            "\n[bold #58a6ff]💡 Suggested Approach[/bold #58a6ff]\n"
+                            + opt
+                        )
+            except Exception:
+                pass
 
         except Exception as e:
             stream.show_error(f"Evaluation failed: {e}")

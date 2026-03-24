@@ -109,6 +109,50 @@ Respond ONLY with valid JSON as an array of {count} problems:
     ]
 
 
+def freeform_questions_prompt(
+    source: str,
+    text: str,
+    question_types: list[str],
+    count: int,
+) -> list[dict]:
+    """
+    Generate freeform interview questions (behavioural, system_design, conceptual, etc.)
+    drawn from a job description or resume project text.
+
+    source: 'jd' | 'resume'
+    text: the raw JD or resume content
+    question_types: list like ['technical', 'behavioural', 'system_design', 'conceptual']
+    count: number of questions to generate
+    """
+    source_label = "job description" if source == "jd" else "resume / project description"
+    types_str = ", ".join(question_types)
+    schema = """{
+  "question": "string — the interview question",
+  "type": "string — one of the requested types",
+  "follow_ups": ["follow-up question 1", "follow-up question 2"]
+}"""
+
+    return [
+        system_message(),
+        user_message(
+            f"""Analyze the following {source_label} and generate {count} freeform interview questions.
+
+{source_label.upper()}:
+{text[:3000]}
+
+Generate questions of these types: {types_str}
+Distribute questions across the types when multiple are specified.
+
+For each question, include 1-3 follow-up probing questions that a interviewer might ask.
+Focus on depth of understanding, trade-offs, lessons learned, and practical application.
+DO NOT generate coding/LeetCode-style problems — these should be verbal interview questions.
+
+Respond ONLY with valid JSON as an array of {count} objects matching this schema:
+[{schema}, ...]"""
+        ),
+    ]
+
+
 def resume_problems_prompt(
     resume_parsed: dict,
     difficulty: str,

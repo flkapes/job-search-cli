@@ -104,6 +104,72 @@ class SessionRepository(BaseRepository):
             )
         )
 
+    def get_attempt_by_id(self, attempt_id: int) -> dict | None:
+        """Return a single attempt joined with its problem title."""
+        return self.row_to_dict(
+            self._execute_one(
+                """SELECT pa.*, p.title AS problem_title
+                   FROM problem_attempts pa
+                   LEFT JOIN problems p ON pa.problem_id = p.id
+                   WHERE pa.id = ?""",
+                (attempt_id,),
+            )
+        )
+
+    def get_attempts_for_session(self, session_id: int) -> list[dict]:
+        """Return all attempts for a session, ordered by time."""
+        return self.rows_to_dicts(
+            self._execute(
+                "SELECT * FROM problem_attempts WHERE session_id = ? ORDER BY attempted_at",
+                (session_id,),
+            )
+        )
+
+    def get_sessions_by_type(self, session_type: str) -> list[dict]:
+        """Return all sessions of a given type."""
+        return self.rows_to_dicts(
+            self._execute(
+                "SELECT * FROM practice_sessions WHERE session_type = ? ORDER BY started_at DESC",
+                (session_type,),
+            )
+        )
+
+    def set_difficulty_rating(self, attempt_id: int, rating: int) -> None:
+        """Record the user's perceived difficulty for an attempt (1–5)."""
+        if not (1 <= rating <= 5):
+            raise ValueError(f"Difficulty rating must be 1–5, got {rating}")
+        self._update(
+            "UPDATE problem_attempts SET user_difficulty_rating = ? WHERE id = ?",
+            (rating, attempt_id),
+        )
+
+    def get_mislabeled_problems(self, min_ratings: int = 3, divergence: float = 2.0) -> list[dict]:
+        """
+        Return problems where the average user rating diverges >= divergence steps
+        from the label's numeric equivalent (easy=1, medium=3, hard=5), requiring
+        at least min_ratings rated attempts.
+        """
+        return self.rows_to_dicts(
+            self._execute(
+                """SELECT p.id, p.title, p.difficulty,
+                          COUNT(pa.user_difficulty_rating) AS rating_count,
+                          AVG(pa.user_difficulty_rating)  AS avg_user_rating
+                   FROM problems p
+                   JOIN problem_attempts pa ON pa.problem_id = p.id
+                   WHERE pa.user_difficulty_rating IS NOT NULL
+                   GROUP BY p.id
+                   HAVING rating_count >= ?
+                      AND ABS(AVG(pa.user_difficulty_rating) -
+                              CASE p.difficulty
+                                  WHEN 'easy'   THEN 1.0
+                                  WHEN 'medium' THEN 3.0
+                                  WHEN 'hard'   THEN 5.0
+                                  ELSE 3.0
+                              END) >= ?""",
+                (min_ratings, divergence),
+            )
+        )
+
     def get_daily_activity(self, days: int = 30) -> list[dict]:
         return self.rows_to_dicts(
             self._execute(
