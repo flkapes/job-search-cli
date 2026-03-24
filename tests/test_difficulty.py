@@ -4,19 +4,18 @@ from __future__ import annotations
 
 import pytest
 
-from codepractice.core.difficulty import (
-    compute_composite_score,
-    get_strong_areas,
-    get_weak_areas,
-    suggest_next_difficulty,
-)
 from codepractice.config import (
     ADAPTIVE_WINDOW,
     DIFFICULTY_DEMOTION_THRESHOLD,
     DIFFICULTY_PROMOTION_THRESHOLD,
     SCORE_WEIGHTS,
 )
-
+from codepractice.core.difficulty import (
+    compute_composite_score,
+    get_strong_areas,
+    get_weak_areas,
+    suggest_next_difficulty,
+)
 
 # ── compute_composite_score ────────────────────────────────────────────────────
 

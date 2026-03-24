@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-import pytest
-
 from codepractice.db.repositories.problems import ProblemRepository
-from codepractice.db.repositories.sessions import SessionRepository
 from codepractice.db.repositories.profile import ProfileRepository
-
+from codepractice.db.repositories.sessions import SessionRepository
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 

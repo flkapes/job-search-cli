@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from codepractice.utils.code_runner import RunResult, run_code, run_with_test_cases
 
 

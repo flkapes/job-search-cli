@@ -7,24 +7,16 @@ import pytest
 from codepractice.core.models import (
     AIFeedback,
     AppStats,
-    Difficulty,
     DayPlan,
-    Example,
+    Difficulty,
     ExperienceLevel,
     LearningPlan,
     LLMBackend,
-    PlanStatus,
-    PlanTask,
     Problem,
-    ProblemAttempt,
     ProblemCategory,
-    ProblemSource,
-    ResumeParsed,
     SessionType,
-    Solution,
     UserProfile,
 )
-
 
 # ── Enum sanity ────────────────────────────────────────────────────────────────
 

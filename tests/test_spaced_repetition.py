@@ -14,7 +14,6 @@ from codepractice.core.spaced_repetition import (
 )
 from codepractice.db.repositories.problems import ProblemRepository
 
-
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
 def _make_problem(db, title: str = "Test Problem") -> int:
