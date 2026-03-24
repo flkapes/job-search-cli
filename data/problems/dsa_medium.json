@@ -1,0 +1,99 @@
+[
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "two_pointers",
+    "difficulty": "medium",
+    "title": "Container With Most Water",
+    "description": "Given an array `height` where `height[i]` is the height of a vertical line at position `i`, find two lines that together with the x-axis form a container that holds the most water.\n\nReturn the maximum amount of water the container can store.",
+    "constraints": "2 ≤ len(height) ≤ 10^5. 0 ≤ height[i] ≤ 10^4.",
+    "examples": [
+      {"input": "height = [1,8,6,2,5,4,8,3,7]", "output": "49", "explanation": "Lines at index 1 (h=8) and 8 (h=7). Width=7, min height=7. Area = 7×7 = 49."}
+    ],
+    "hints": [
+      "Use two pointers at the start and end.",
+      "Area = min(height[left], height[right]) × (right - left).",
+      "Always move the pointer with the shorter height — moving the taller one can't increase the area."
+    ],
+    "solution": {"code": "def max_area(height):\n    left, right = 0, len(height) - 1\n    max_water = 0\n    while left < right:\n        w = right - left\n        h = min(height[left], height[right])\n        max_water = max(max_water, w * h)\n        if height[left] < height[right]:\n            left += 1\n        else:\n            right -= 1\n    return max_water", "explanation": "Moving the shorter pointer is optimal: we might find a taller line. Moving the taller pointer only shrinks width without possibly increasing height.", "time_complexity": "O(n)", "space_complexity": "O(1)"},
+    "tags": ["two-pointers", "greedy", "classic"]
+  },
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "sliding_window",
+    "difficulty": "medium",
+    "title": "Longest Substring Without Repeating Characters",
+    "description": "Given a string, find the length of the longest substring without repeating characters.\n\nExample: `'abcabcbb'` → `3` (the answer is `'abc'`).",
+    "constraints": "0 ≤ len(s) ≤ 5 × 10^4. s consists of English letters, digits, symbols, spaces.",
+    "examples": [
+      {"input": "s = 'abcabcbb'", "output": "3", "explanation": "'abc' is the longest without repeats."},
+      {"input": "s = 'bbbbb'", "output": "1", "explanation": "Every character is the same."}
+    ],
+    "hints": [
+      "Use a sliding window with a set to track characters in the current window.",
+      "Expand the window by moving right. If duplicate found, shrink from the left.",
+      "A hash map storing last-seen index allows jumping the left pointer directly."
+    ],
+    "solution": {"code": "def length_of_longest_substring(s):\n    seen = {}\n    left = 0\n    max_len = 0\n    for right, char in enumerate(s):\n        if char in seen and seen[char] >= left:\n            left = seen[char] + 1\n        seen[char] = right\n        max_len = max(max_len, right - left + 1)\n    return max_len", "explanation": "We track the last index of each character. When a duplicate is found, we jump left past the previous occurrence. This gives O(n) time.", "time_complexity": "O(n)", "space_complexity": "O(min(n, alphabet_size))"},
+    "tags": ["sliding-window", "hash-map", "string", "classic"]
+  },
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "dynamic_programming",
+    "difficulty": "medium",
+    "title": "Climbing Stairs",
+    "description": "You are climbing a staircase with `n` steps. Each time you can climb 1 or 2 steps.\n\nIn how many distinct ways can you reach the top?",
+    "constraints": "1 ≤ n ≤ 45.",
+    "examples": [
+      {"input": "n = 3", "output": "3", "explanation": "Three ways: 1+1+1, 1+2, 2+1."},
+      {"input": "n = 5", "output": "8", "explanation": "dp[5] = dp[4] + dp[3] = 5 + 3 = 8."}
+    ],
+    "hints": [
+      "This is the Fibonacci sequence! dp[n] = dp[n-1] + dp[n-2].",
+      "Base cases: dp[1] = 1, dp[2] = 2.",
+      "You only need two variables, not a full array."
+    ],
+    "solution": {"code": "def climb_stairs(n):\n    if n <= 2:\n        return n\n    a, b = 1, 2\n    for _ in range(3, n + 1):\n        a, b = b, a + b\n    return b", "explanation": "Classic DP problem. Each step can be reached from step-1 or step-2. The recurrence is Fibonacci. Space-optimized to O(1) by keeping only the last two values.", "time_complexity": "O(n)", "space_complexity": "O(1)"},
+    "tags": ["dp", "fibonacci", "classic"]
+  },
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "dfs",
+    "difficulty": "medium",
+    "title": "Number of Islands",
+    "description": "Given a 2D grid of '1's (land) and '0's (water), count the number of islands.\n\nAn island is surrounded by water and is formed by connecting adjacent lands horizontally or vertically.",
+    "constraints": "1 ≤ m, n ≤ 300. grid[i][j] is '0' or '1'.",
+    "examples": [
+      {"input": "grid = [['1','1','0'],['1','0','0'],['0','0','1']]", "output": "2", "explanation": "Top-left 1s form one island, bottom-right 1 is another."}
+    ],
+    "hints": [
+      "Iterate through the grid. When you find a '1', that's a new island — increment count.",
+      "Use DFS/BFS to mark all connected '1's as visited (change to '0').",
+      "This prevents counting the same island twice."
+    ],
+    "solution": {"code": "def num_islands(grid):\n    if not grid:\n        return 0\n    rows, cols = len(grid), len(grid[0])\n    count = 0\n\n    def dfs(r, c):\n        if r < 0 or r >= rows or c < 0 or c >= cols or grid[r][c] == '0':\n            return\n        grid[r][c] = '0'  # mark visited\n        dfs(r+1, c)\n        dfs(r-1, c)\n        dfs(r, c+1)\n        dfs(r, c-1)\n\n    for r in range(rows):\n        for c in range(cols):\n            if grid[r][c] == '1':\n                count += 1\n                dfs(r, c)\n    return count", "explanation": "DFS flood-fills each island. When we encounter an unvisited '1', it's a new island. DFS marks all connected land as visited.", "time_complexity": "O(m × n)", "space_complexity": "O(m × n) worst case recursion"},
+    "tags": ["dfs", "grid", "flood-fill", "classic"]
+  },
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "heap",
+    "difficulty": "medium",
+    "title": "Top K Frequent Elements",
+    "description": "Given an integer array `nums` and an integer `k`, return the `k` most frequent elements. You may return the answer in any order.",
+    "constraints": "1 ≤ len(nums) ≤ 10^5. 1 ≤ k ≤ number of unique elements.",
+    "examples": [
+      {"input": "nums = [1,1,1,2,2,3], k = 2", "output": "[1, 2]", "explanation": "1 appears 3 times, 2 appears 2 times."}
+    ],
+    "hints": [
+      "Count frequencies with collections.Counter.",
+      "Use heapq.nlargest(k, ...) for O(n log k) solution.",
+      "Alternatively, bucket sort by frequency for O(n)."
+    ],
+    "solution": {"code": "from collections import Counter\nimport heapq\n\ndef top_k_frequent(nums, k):\n    counts = Counter(nums)\n    return heapq.nlargest(k, counts.keys(), key=counts.get)", "explanation": "Counter gives us O(n) frequency map. heapq.nlargest finds top k in O(n log k), which is better than sorting O(n log n) when k << n.", "time_complexity": "O(n log k)", "space_complexity": "O(n)"},
+    "tags": ["heap", "hash-map", "frequency", "classic"]
+  }
+]

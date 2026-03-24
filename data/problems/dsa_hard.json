@@ -1,0 +1,59 @@
+[
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "sliding_window",
+    "difficulty": "hard",
+    "title": "Minimum Window Substring",
+    "description": "Given two strings `s` and `t`, return the minimum window substring of `s` that contains all characters of `t` (including duplicates).\n\nIf no such window exists, return `\"\"`.",
+    "constraints": "1 ≤ len(s), len(t) ≤ 10^5. s and t consist of uppercase and lowercase English letters.",
+    "examples": [
+      {"input": "s = 'ADOBECODEBANC', t = 'ABC'", "output": "'BANC'", "explanation": "The minimum window containing A, B, C is 'BANC'."}
+    ],
+    "hints": [
+      "Use two frequency maps: one for t, one for the current window.",
+      "Expand window to the right until all characters are covered.",
+      "Then shrink from the left to find the minimum valid window."
+    ],
+    "solution": {"code": "from collections import Counter\n\ndef min_window(s, t):\n    if not t or not s:\n        return ''\n    need = Counter(t)\n    have = {}\n    formed = 0\n    required = len(need)\n    left = 0\n    result = (float('inf'), 0, 0)\n\n    for right, char in enumerate(s):\n        have[char] = have.get(char, 0) + 1\n        if char in need and have[char] == need[char]:\n            formed += 1\n        while formed == required:\n            window_len = right - left + 1\n            if window_len < result[0]:\n                result = (window_len, left, right)\n            left_char = s[left]\n            have[left_char] -= 1\n            if left_char in need and have[left_char] < need[left_char]:\n                formed -= 1\n            left += 1\n\n    return '' if result[0] == float('inf') else s[result[1]:result[2]+1]", "explanation": "Classic sliding window with two pointers. We expand right to cover all of t, then shrink left to minimize. 'formed' tracks how many characters from t are fully covered.", "time_complexity": "O(|s| + |t|)", "space_complexity": "O(|s| + |t|)"},
+    "tags": ["sliding-window", "hash-map", "string", "classic"]
+  },
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "dynamic_programming",
+    "difficulty": "hard",
+    "title": "Longest Increasing Subsequence",
+    "description": "Given an integer array `nums`, return the length of the longest strictly increasing subsequence.\n\nA subsequence is derived from the array by deleting some or no elements without changing the order of remaining elements.\n\nImplement the O(n log n) solution using binary search.",
+    "constraints": "1 ≤ len(nums) ≤ 2500. -10^4 ≤ nums[i] ≤ 10^4.",
+    "examples": [
+      {"input": "nums = [10,9,2,5,3,7,101,18]", "output": "4", "explanation": "The LIS is [2,3,7,101] or [2,5,7,101]."}
+    ],
+    "hints": [
+      "The O(n²) DP approach: dp[i] = length of LIS ending at index i.",
+      "For O(n log n): maintain a 'tails' array where tails[i] is the smallest tail of all increasing subsequences of length i+1.",
+      "Use bisect_left to find where to place each number in tails."
+    ],
+    "solution": {"code": "from bisect import bisect_left\n\ndef length_of_lis(nums):\n    tails = []\n    for num in nums:\n        pos = bisect_left(tails, num)\n        if pos == len(tails):\n            tails.append(num)\n        else:\n            tails[pos] = num\n    return len(tails)", "explanation": "tails[i] stores the smallest possible tail of an increasing subsequence of length i+1. For each number, we either extend the longest subsequence or replace an element to keep tails optimal. Binary search gives O(n log n).", "time_complexity": "O(n log n)", "space_complexity": "O(n)"},
+    "tags": ["dp", "binary-search", "patience-sorting", "classic"]
+  },
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "monotonic_stack",
+    "difficulty": "hard",
+    "title": "Largest Rectangle in Histogram",
+    "description": "Given an array of integers `heights` representing a histogram where the width of each bar is 1, find the area of the largest rectangle that can be formed in the histogram.",
+    "constraints": "1 ≤ len(heights) ≤ 10^5. 0 ≤ heights[i] ≤ 10^4.",
+    "examples": [
+      {"input": "heights = [2,1,5,6,2,3]", "output": "10", "explanation": "Rectangle of height 5 spanning indices 2-3 has area 5×2 = 10."}
+    ],
+    "hints": [
+      "Use a monotonic increasing stack that stores indices.",
+      "When you encounter a bar shorter than the top of the stack, pop and calculate area.",
+      "The width extends from the previous stack element to the current index."
+    ],
+    "solution": {"code": "def largest_rectangle(heights):\n    stack = []  # stores indices\n    max_area = 0\n    heights.append(0)  # sentinel to flush remaining bars\n\n    for i, h in enumerate(heights):\n        while stack and heights[stack[-1]] > h:\n            height = heights[stack.pop()]\n            width = i if not stack else i - stack[-1] - 1\n            max_area = max(max_area, height * width)\n        stack.append(i)\n\n    heights.pop()  # restore input\n    return max_area", "explanation": "The monotonic stack maintains bars in increasing order. When a shorter bar appears, we pop taller bars and compute their maximum rectangle. The sentinel (0) at the end forces all remaining bars to be processed.", "time_complexity": "O(n)", "space_complexity": "O(n)"},
+    "tags": ["monotonic-stack", "histogram", "classic"]
+  }
+]

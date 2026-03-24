@@ -1,0 +1,269 @@
+[
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "vocabulary",
+    "difficulty": "easy",
+    "title": "Dictionary Comprehension Filter",
+    "description": "Write a dictionary comprehension that takes a dictionary of student names → scores and returns only students who scored above 80.\n\nFor example, given `{'Alice': 92, 'Bob': 67, 'Charlie': 85, 'Diana': 73}`, return `{'Alice': 92, 'Charlie': 85}`.",
+    "constraints": "Must use a single dictionary comprehension — no loops or filter().",
+    "examples": [
+      {"input": "{'Alice': 92, 'Bob': 67, 'Charlie': 85}", "output": "{'Alice': 92, 'Charlie': 85}", "explanation": "Only Alice and Charlie have scores above 80."}
+    ],
+    "hints": [
+      "Dictionary comprehensions look like: {k: v for k, v in dict.items() if condition}",
+      "Use .items() to iterate over key-value pairs.",
+      "The condition goes after the for clause."
+    ],
+    "solution": {"code": "def filter_high_scores(scores):\n    return {name: score for name, score in scores.items() if score > 80}", "explanation": "We iterate over all key-value pairs and keep only those where score > 80.", "time_complexity": "O(n)", "space_complexity": "O(n)"},
+    "tags": ["comprehension", "dictionary", "filtering"]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "vocabulary",
+    "difficulty": "medium",
+    "title": "Generator Pipeline",
+    "description": "Create a generator pipeline that:\n1. Takes an iterable of strings\n2. Strips whitespace from each\n3. Filters out empty strings\n4. Converts to uppercase\n5. Yields results lazily\n\nImplement each step as a separate generator function, then chain them.",
+    "constraints": "Must use generators (yield), not list comprehensions. Each step should be its own generator.",
+    "examples": [
+      {"input": "[' hello ', '', '  world  ', '  ', 'python']", "output": "['HELLO', 'WORLD', 'PYTHON']", "explanation": "Empty/whitespace-only strings are filtered, rest are stripped and uppercased."}
+    ],
+    "hints": [
+      "A generator function uses 'yield' instead of 'return'.",
+      "You can chain generators: gen3(gen2(gen1(data)))",
+      "Use str.strip() to remove whitespace and check if result is truthy."
+    ],
+    "solution": {"code": "def strip_items(iterable):\n    for item in iterable:\n        yield item.strip()\n\ndef filter_empty(iterable):\n    for item in iterable:\n        if item:\n            yield item\n\ndef to_upper(iterable):\n    for item in iterable:\n        yield item.upper()\n\ndef pipeline(data):\n    return to_upper(filter_empty(strip_items(data)))", "explanation": "Each generator handles one transformation. Chaining them creates a lazy pipeline that processes items on demand.", "time_complexity": "O(n)", "space_complexity": "O(1)"},
+    "tags": ["generator", "pipeline", "lazy-evaluation"]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "vocabulary",
+    "difficulty": "hard",
+    "title": "Custom Context Manager with Exception Handling",
+    "description": "Implement a context manager class `Timer` that:\n1. Records how long the block takes to execute\n2. Prints the elapsed time on exit\n3. If an exception occurs inside the block, logs the exception type and message but does NOT suppress it\n4. Stores the elapsed time in a `.elapsed` attribute\n\nUse the `__enter__` / `__exit__` protocol (not @contextmanager).",
+    "constraints": "Must implement __enter__ and __exit__. Do not suppress exceptions.",
+    "examples": [
+      {"input": "with Timer() as t:\n    time.sleep(0.1)", "output": "Timer: 0.10s", "explanation": "The timer measures the block duration."}
+    ],
+    "hints": [
+      "__enter__ should start timing and return self.",
+      "__exit__ receives (exc_type, exc_val, exc_tb) — return False to propagate exceptions.",
+      "Use time.perf_counter() for accurate timing."
+    ],
+    "solution": {"code": "import time\n\nclass Timer:\n    def __init__(self):\n        self.elapsed = 0.0\n        self._start = 0.0\n\n    def __enter__(self):\n        self._start = time.perf_counter()\n        return self\n\n    def __exit__(self, exc_type, exc_val, exc_tb):\n        self.elapsed = time.perf_counter() - self._start\n        print(f'Timer: {self.elapsed:.2f}s')\n        if exc_type:\n            print(f'Exception: {exc_type.__name__}: {exc_val}')\n        return False  # Don't suppress exceptions", "explanation": "The context manager protocol: __enter__ starts the timer, __exit__ calculates elapsed time. Returning False from __exit__ lets exceptions propagate.", "time_complexity": "O(1)", "space_complexity": "O(1)"},
+    "tags": ["context-manager", "protocol", "exception-handling"]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "builtins",
+    "difficulty": "easy",
+    "title": "Enumerate with Custom Start",
+    "description": "Given a list of items, use `enumerate` to create a numbered display string starting from 1 (not 0).\n\nReturn a list of strings like `['1. apple', '2. banana', '3. cherry']`.",
+    "constraints": "Must use enumerate(). One-liner preferred.",
+    "examples": [
+      {"input": "['apple', 'banana', 'cherry']", "output": "['1. apple', '2. banana', '3. cherry']", "explanation": "enumerate(items, 1) starts counting from 1."}
+    ],
+    "hints": [
+      "enumerate() takes an optional 'start' parameter.",
+      "Use a list comprehension with f-strings.",
+      "enumerate(items, 1) gives (1, 'apple'), (2, 'banana'), ..."
+    ],
+    "solution": {"code": "def numbered_list(items):\n    return [f'{i}. {item}' for i, item in enumerate(items, 1)]", "explanation": "enumerate(items, 1) counts from 1. We format each pair into a numbered string.", "time_complexity": "O(n)", "space_complexity": "O(n)"},
+    "tags": ["enumerate", "builtins", "list-comprehension"]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "builtins",
+    "difficulty": "medium",
+    "title": "Group Items with itertools.groupby",
+    "description": "Given a sorted list of tuples `(department, employee_name)`, group employees by department using `itertools.groupby`.\n\nReturn a dictionary mapping department → list of employee names.",
+    "constraints": "Must use itertools.groupby. Input is pre-sorted by department.",
+    "examples": [
+      {"input": "[('eng', 'Alice'), ('eng', 'Bob'), ('sales', 'Charlie'), ('sales', 'Diana')]", "output": "{'eng': ['Alice', 'Bob'], 'sales': ['Charlie', 'Diana']}", "explanation": "groupby groups consecutive elements with the same key."}
+    ],
+    "hints": [
+      "itertools.groupby returns (key, group_iterator) pairs.",
+      "The input must be sorted by the grouping key for groupby to work correctly.",
+      "Use operator.itemgetter(0) or a lambda as the key function."
+    ],
+    "solution": {"code": "from itertools import groupby\nfrom operator import itemgetter\n\ndef group_by_dept(employees):\n    return {\n        dept: [name for _, name in group]\n        for dept, group in groupby(employees, key=itemgetter(0))\n    }", "explanation": "groupby yields (key, sub_iterator) for runs of same key. We extract just the names from each group.", "time_complexity": "O(n)", "space_complexity": "O(n)"},
+    "tags": ["itertools", "groupby", "data-processing"]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "builtins",
+    "difficulty": "medium",
+    "title": "functools.reduce to Build Nested Dict",
+    "description": "Use `functools.reduce` to set a value in a nested dictionary given a list of keys.\n\nFor example, given keys `['a', 'b', 'c']` and value `42`, produce `{'a': {'b': {'c': 42}}}`.",
+    "constraints": "Must use functools.reduce. Build from right to left.",
+    "examples": [
+      {"input": "keys=['a','b','c'], value=42", "output": "{'a': {'b': {'c': 42}}}", "explanation": "Each key wraps the previous result in a new dict."}
+    ],
+    "hints": [
+      "Think about building from the inside out: start with {c: 42}, then {b: {c: 42}}, etc.",
+      "Reverse the keys and reduce.",
+      "The reducing function takes (accumulator, key) and returns {key: accumulator}."
+    ],
+    "solution": {"code": "from functools import reduce\n\ndef nested_dict(keys, value):\n    return reduce(lambda acc, key: {key: acc}, reversed(keys), value)", "explanation": "We reverse the keys and fold from left, wrapping each level. reduce(f, ['c','b','a'], 42) → f('c', 42) → {'c': 42} → f('b', {'c': 42}) → ...", "time_complexity": "O(n)", "space_complexity": "O(n)"},
+    "tags": ["functools", "reduce", "nested-dict"]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "oop",
+    "difficulty": "easy",
+    "title": "Property with Validation",
+    "description": "Create a `Temperature` class with a `celsius` property that:\n1. Stores temperature in Celsius\n2. Validates that temperature >= -273.15 (absolute zero) on set\n3. Has a read-only `fahrenheit` property that computes F = C * 9/5 + 32",
+    "constraints": "Use @property decorator. Raise ValueError for invalid temperatures.",
+    "examples": [
+      {"input": "t = Temperature(100); t.fahrenheit", "output": "212.0", "explanation": "100°C = 212°F"},
+      {"input": "t.celsius = -300", "output": "ValueError", "explanation": "Below absolute zero is invalid."}
+    ],
+    "hints": [
+      "Use @property for the getter and @celsius.setter for the setter.",
+      "Store the actual value in a private attribute like _celsius.",
+      "fahrenheit only needs a @property getter (no setter)."
+    ],
+    "solution": {"code": "class Temperature:\n    def __init__(self, celsius=0):\n        self.celsius = celsius  # Uses the setter\n\n    @property\n    def celsius(self):\n        return self._celsius\n\n    @celsius.setter\n    def celsius(self, value):\n        if value < -273.15:\n            raise ValueError('Temperature below absolute zero')\n        self._celsius = value\n\n    @property\n    def fahrenheit(self):\n        return self._celsius * 9/5 + 32", "explanation": "The @property decorator creates a managed attribute. The setter validates input. fahrenheit is computed on-the-fly.", "time_complexity": "O(1)", "space_complexity": "O(1)"},
+    "tags": ["property", "validation", "oop"]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "oop",
+    "difficulty": "medium",
+    "title": "Custom Iterator: Fibonacci",
+    "description": "Implement a `Fibonacci` iterator class that yields Fibonacci numbers up to a maximum value.\n\nThe class must implement `__iter__` and `__next__` protocol.\n\nUsage: `list(Fibonacci(20))` → `[0, 1, 1, 2, 3, 5, 8, 13]`",
+    "constraints": "Must implement __iter__ and __next__. Raise StopIteration when done.",
+    "examples": [
+      {"input": "list(Fibonacci(10))", "output": "[0, 1, 1, 2, 3, 5, 8]", "explanation": "Fibonacci numbers up to (not exceeding) 10."}
+    ],
+    "hints": [
+      "__iter__ should return self.",
+      "__next__ should track two state variables (a, b) and advance each call.",
+      "Raise StopIteration when the next value would exceed the max."
+    ],
+    "solution": {"code": "class Fibonacci:\n    def __init__(self, max_val):\n        self.max_val = max_val\n        self.a, self.b = 0, 1\n\n    def __iter__(self):\n        self.a, self.b = 0, 1\n        return self\n\n    def __next__(self):\n        if self.a > self.max_val:\n            raise StopIteration\n        result = self.a\n        self.a, self.b = self.b, self.a + self.b\n        return result", "explanation": "The iterator protocol: __iter__ returns self (resets state), __next__ yields one value at a time. State is maintained between calls.", "time_complexity": "O(n)", "space_complexity": "O(1)"},
+    "tags": ["iterator", "protocol", "fibonacci"]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "oop",
+    "difficulty": "hard",
+    "title": "Descriptor Protocol: Validated Fields",
+    "description": "Implement a `TypedField` descriptor that enforces type checking on class attributes.\n\n```python\nclass Person:\n    name = TypedField(str)\n    age = TypedField(int)\n\np = Person()\np.name = 'Alice'  # OK\np.age = 'not a number'  # Raises TypeError\n```\n\nThe descriptor must use `__set_name__`, `__get__`, and `__set__`.",
+    "constraints": "Must implement the full descriptor protocol with __set_name__.",
+    "examples": [
+      {"input": "p.name = 42", "output": "TypeError", "explanation": "42 is not a str."}
+    ],
+    "hints": [
+      "__set_name__(self, owner, name) receives the attribute name automatically.",
+      "__set__ should check isinstance(value, self.expected_type).",
+      "Store the value in the instance's __dict__ using the field name."
+    ],
+    "solution": {"code": "class TypedField:\n    def __init__(self, expected_type):\n        self.expected_type = expected_type\n        self.name = None\n\n    def __set_name__(self, owner, name):\n        self.name = name\n\n    def __get__(self, obj, objtype=None):\n        if obj is None:\n            return self\n        return obj.__dict__.get(self.name)\n\n    def __set__(self, obj, value):\n        if not isinstance(value, self.expected_type):\n            raise TypeError(\n                f'{self.name} must be {self.expected_type.__name__}, '\n                f'got {type(value).__name__}'\n            )\n        obj.__dict__[self.name] = value", "explanation": "Descriptors intercept attribute access. __set_name__ (Python 3.6+) auto-captures the attribute name. Values are stored in the instance's __dict__, not the descriptor.", "time_complexity": "O(1)", "space_complexity": "O(1)"},
+    "tags": ["descriptor", "protocol", "metaprogramming"]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "threading",
+    "difficulty": "easy",
+    "title": "Basic Thread Pool",
+    "description": "Use `concurrent.futures.ThreadPoolExecutor` to download the lengths of multiple URLs in parallel.\n\nGiven a list of URLs, return a dict mapping URL → content length (or -1 on error).\n\nNote: For this exercise, simulate the download with `len(url)` instead of actual HTTP requests.",
+    "constraints": "Must use ThreadPoolExecutor. Use max_workers=4.",
+    "examples": [
+      {"input": "['http://a.com', 'http://b.com']", "output": "{'http://a.com': 12, 'http://b.com': 12}", "explanation": "Using len(url) as simulated download."}
+    ],
+    "hints": [
+      "Use executor.submit() to schedule tasks.",
+      "Use as_completed() or executor.map() to gather results.",
+      "Wrap individual task logic in a try/except for error handling."
+    ],
+    "solution": {"code": "from concurrent.futures import ThreadPoolExecutor, as_completed\n\ndef fetch_lengths(urls, max_workers=4):\n    def fetch(url):\n        try:\n            return url, len(url)  # simulated\n        except Exception:\n            return url, -1\n\n    results = {}\n    with ThreadPoolExecutor(max_workers=max_workers) as executor:\n        futures = {executor.submit(fetch, url): url for url in urls}\n        for future in as_completed(futures):\n            url, length = future.result()\n            results[url] = length\n    return results", "explanation": "ThreadPoolExecutor manages a pool of threads. We submit tasks and collect results as they complete. The context manager ensures clean shutdown.", "time_complexity": "O(n)", "space_complexity": "O(n)"},
+    "tags": ["threading", "concurrent.futures", "parallel"]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "threading",
+    "difficulty": "medium",
+    "title": "Thread-Safe Counter with Lock",
+    "description": "Implement a thread-safe counter class that can be incremented from multiple threads without race conditions.\n\nThe counter must use `threading.Lock` to protect the shared state.\n\nWrite a test that spawns 10 threads, each incrementing 1000 times, and verifies the final count is 10000.",
+    "constraints": "Must use threading.Lock. The final count must be deterministically correct.",
+    "examples": [
+      {"input": "10 threads × 1000 increments", "output": "counter.value == 10000", "explanation": "Without a lock, race conditions would give wrong results."}
+    ],
+    "hints": [
+      "Use 'with self.lock:' to acquire and release the lock automatically.",
+      "threading.Lock is a context manager.",
+      "Use threading.Thread(target=func) and .join() to wait for completion."
+    ],
+    "solution": {"code": "import threading\n\nclass SafeCounter:\n    def __init__(self):\n        self.value = 0\n        self._lock = threading.Lock()\n\n    def increment(self):\n        with self._lock:\n            self.value += 1\n\n# Test\ncounter = SafeCounter()\nthreads = []\nfor _ in range(10):\n    t = threading.Thread(target=lambda: [counter.increment() for _ in range(1000)])\n    threads.append(t)\n    t.start()\nfor t in threads:\n    t.join()\nassert counter.value == 10000, f'Expected 10000, got {counter.value}'", "explanation": "Without the lock, multiple threads can read-modify-write the counter simultaneously, causing lost updates. The lock serializes access to the critical section.", "time_complexity": "O(n)", "space_complexity": "O(1)"},
+    "tags": ["threading", "lock", "concurrency", "race-condition"]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "patterns",
+    "difficulty": "medium",
+    "title": "Observer Pattern",
+    "description": "Implement the Observer pattern in Python.\n\nCreate an `EventEmitter` class that supports:\n- `on(event_name, callback)` — register a listener\n- `off(event_name, callback)` — remove a listener\n- `emit(event_name, *args)` — call all listeners for that event\n\nCallbacks should be called in registration order.",
+    "constraints": "Use a dict of lists to store listeners. Handle missing events gracefully.",
+    "examples": [
+      {"input": "emitter.on('data', print); emitter.emit('data', 42)", "output": "42", "explanation": "The print callback receives the emitted argument."}
+    ],
+    "hints": [
+      "Use collections.defaultdict(list) for the listener registry.",
+      "on() appends to the list, off() removes from it.",
+      "emit() iterates and calls each callback with the provided args."
+    ],
+    "solution": {"code": "from collections import defaultdict\n\nclass EventEmitter:\n    def __init__(self):\n        self._listeners = defaultdict(list)\n\n    def on(self, event, callback):\n        self._listeners[event].append(callback)\n\n    def off(self, event, callback):\n        try:\n            self._listeners[event].remove(callback)\n        except ValueError:\n            pass\n\n    def emit(self, event, *args, **kwargs):\n        for callback in self._listeners.get(event, []):\n            callback(*args, **kwargs)", "explanation": "The Observer pattern decouples event producers from consumers. Using defaultdict avoids KeyError for unregistered events.", "time_complexity": "O(n) per emit", "space_complexity": "O(n)"},
+    "tags": ["design-pattern", "observer", "event-driven"]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "vocabulary",
+    "difficulty": "easy",
+    "title": "Decorator: Call Counter",
+    "description": "Write a decorator `count_calls` that counts how many times a function is called.\n\nThe count should be accessible as `func.call_count`.\n\n```python\n@count_calls\ndef greet(name):\n    return f'Hello, {name}!'\n\ngreet('Alice')\ngreet('Bob')\nprint(greet.call_count)  # 2\n```",
+    "constraints": "Must use functools.wraps. The counter must be attached to the wrapper function.",
+    "examples": [
+      {"input": "greet('Alice'); greet('Bob'); greet.call_count", "output": "2", "explanation": "Called twice."}
+    ],
+    "hints": [
+      "Use functools.wraps to preserve the original function's metadata.",
+      "Attach call_count as an attribute on the wrapper function.",
+      "Increment the counter inside the wrapper before/after calling the original."
+    ],
+    "solution": {"code": "import functools\n\ndef count_calls(func):\n    @functools.wraps(func)\n    def wrapper(*args, **kwargs):\n        wrapper.call_count += 1\n        return func(*args, **kwargs)\n    wrapper.call_count = 0\n    return wrapper", "explanation": "Decorators wrap a function. We add a call_count attribute to the wrapper function itself and increment it on each call. functools.wraps preserves __name__ etc.", "time_complexity": "O(1)", "space_complexity": "O(1)"},
+    "tags": ["decorator", "functools", "closure"]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "version_control",
+    "difficulty": "easy",
+    "title": "Git Merge vs Rebase",
+    "description": "Explain the difference between `git merge` and `git rebase`.\n\nIn your answer:\n1. Describe what each command does to the commit history\n2. When you would choose merge over rebase (and vice versa)\n3. What is the golden rule of rebasing?\n\nType your answer as a detailed text explanation.",
+    "constraints": "This is a conceptual question. Write a clear, structured explanation.",
+    "examples": [
+      {"input": "explain merge vs rebase", "output": "detailed explanation", "explanation": "Compare commit history shapes, use cases, and the golden rule."}
+    ],
+    "hints": [
+      "Merge creates a merge commit; rebase replays commits on top of another branch.",
+      "Think about commit history: merge preserves history, rebase linearizes it.",
+      "The golden rule: never rebase commits that have been pushed to a shared branch."
+    ],
+    "solution": {"code": "# This is a conceptual question, not a code problem.\n# Key points:\n# MERGE: Creates a merge commit joining two branches. Preserves full history.\n# REBASE: Replays your commits on top of another branch. Creates linear history.\n# Use merge for: shared branches, preserving context of when branches diverged.\n# Use rebase for: cleaning up local work before merging, linear history.\n# Golden rule: Never rebase commits that others have based work on.", "explanation": "Merge is non-destructive (adds a merge commit), rebase rewrites history (linear but potentially dangerous if shared). The golden rule prevents rewriting public history.", "time_complexity": "N/A", "space_complexity": "N/A"},
+    "tags": ["git", "version-control", "conceptual"]
+  }
+]
