@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Vertical
 from textual.message import Message
 from textual.widget import Widget
 from textual.widgets import Label, TextArea

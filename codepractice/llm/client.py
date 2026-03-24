@@ -5,18 +5,18 @@ from __future__ import annotations
 import json
 import re
 from abc import ABC, abstractmethod
-from typing import AsyncGenerator, Generator
+from typing import Generator
 
 import httpx
 
 from codepractice.config import (
+    DEBUG,
     LLM_MAX_RETRIES,
     LLM_TIMEOUT,
-    OLLAMA_BASE_URL,
-    OLLAMA_MODEL,
     LMSTUDIO_BASE_URL,
     LMSTUDIO_MODEL,
-    DEBUG,
+    OLLAMA_BASE_URL,
+    OLLAMA_MODEL,
 )
 
 

@@ -10,14 +10,13 @@ from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.reactive import reactive
 from textual.widget import Widget
-from textual.widgets import Button, Label, Select, Static
-from textual.worker import Worker, get_current_worker
+from textual.widgets import Button, Label, Static
 
 from codepractice.core.models import Problem
+from codepractice.core.spaced_repetition import get_due_problems, update_schedule
 from codepractice.tui.widgets.code_editor import CodeEditor
 from codepractice.tui.widgets.problem_card import ProblemCard
 from codepractice.tui.widgets.streaming_output import StreamingOutput
-from codepractice.utils.text_utils import difficulty_badge
 
 
 class Phase(str, Enum):
@@ -89,6 +88,11 @@ class PracticeContent(Widget):
     _session_id: int | None = None
     _code_start_time: float = 0
     _hints_used: int = 0
+    _review_mode: bool = False
+
+    def __init__(self, review_mode: bool = False, **kwargs):
+        super().__init__(**kwargs)
+        self._review_mode = review_mode
 
     def compose(self) -> ComposeResult:
         with Horizontal(id="practice-top-bar"):
@@ -147,6 +151,16 @@ class PracticeContent(Widget):
     def _load_next_problem(self, category: str | None = None, difficulty: str | None = None) -> None:
         self._show_phase("loading")
         self._hints_used = 0
+
+        # In review mode, prioritise due problems from the spaced-repetition queue
+        if self._review_mode and not category:
+            due_ids = get_due_problems(self.app.db, n=1)
+            if due_ids:
+                problem_data = self.app.problem_repo.get_by_id(due_ids[0])
+                if problem_data:
+                    self._problem = Problem.from_db(problem_data)
+                    self._show_problem()
+                    return
 
         # Try to get a problem from the database
         problem_data = self.app.problem_repo.get_random(category=category, difficulty=difficulty)
@@ -263,6 +277,11 @@ class PracticeContent(Widget):
                 if passed:
                     self.app.problem_repo.increment_solved(self._problem.id)
                 self.app.problem_repo.increment_shown(self._problem.id)
+                # Update spaced-repetition schedule for this problem
+                try:
+                    update_schedule(self.app.db, self._problem.id, score)
+                except Exception:
+                    pass
 
         except Exception as e:
             stream.show_error(f"Evaluation failed: {e}")

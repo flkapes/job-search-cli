@@ -6,7 +6,7 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Vertical, VerticalScroll
 from textual.widget import Widget
-from textual.widgets import Button, Input, Label, Static
+from textual.widgets import Input, Label, Static
 
 from codepractice.tui.widgets.streaming_output import StreamingOutput
 

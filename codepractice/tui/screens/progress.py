@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from textual.app import ComposeResult
-from textual.containers import Horizontal, VerticalScroll
+from textual.containers import VerticalScroll
 from textual.widget import Widget
 from textual.widgets import DataTable, Label, Static
 

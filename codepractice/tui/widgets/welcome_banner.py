@@ -6,7 +6,6 @@ from textual.app import ComposeResult
 from textual.widget import Widget
 from textual.widgets import Static
 
-
 BANNER_ART = r"""[bold #58a6ff]
    ██████╗ ██████╗ ██████╗ ███████╗
   ██╔════╝██╔═══██╗██╔══██╗██╔════╝

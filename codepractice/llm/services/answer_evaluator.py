@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from typing import Generator
 
 from codepractice.core.models import AIFeedback, Problem
@@ -55,7 +54,6 @@ class AnswerEvaluatorService:
             data = extract_json(raw)
             if isinstance(data, dict):
                 score = float(data.get("score", 0.5))
-                passed = bool(data.get("passed", score >= 0.7))
                 feedback = data.get("one_line_feedback", "")
                 return AIFeedback.from_score(score, feedback)
         except (LLMError, Exception):

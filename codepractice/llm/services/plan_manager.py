@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Generator
 
-from codepractice.core.models import DayPlan, LearningPlan, PlanStatus, PlanTask, UserProfile
+from codepractice.core.models import DayPlan, LearningPlan, PlanTask, UserProfile
 from codepractice.llm.client import LLMClient, LLMError, extract_json
 from codepractice.llm.prompts.plan_gen import (
     create_plan_prompt,
@@ -67,7 +67,7 @@ class LearningPlanManager:
         messages = daily_briefing_prompt(day.theme, day.objectives, profile)
         try:
             yield from self.client.stream_chat(messages, temperature=0.9)
-        except LLMError as e:
+        except LLMError:
             yield f"Today's focus: {day.theme}. {', '.join(day.objectives[:2])}."
 
     # ── Parsing ────────────────────────────────────────────────────────────────

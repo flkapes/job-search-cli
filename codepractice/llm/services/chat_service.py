@@ -7,7 +7,6 @@ from typing import Generator
 from codepractice.core.models import LearningPlan, UserProfile
 from codepractice.db.repositories.chat_history import ChatHistoryRepository
 from codepractice.llm.client import LLMClient, LLMError
-from codepractice.llm.prompts.base import build_profile_context
 from codepractice.llm.prompts.chat import build_chat_system_prompt, build_resume_analysis_prompt
 
 
