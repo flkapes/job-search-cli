@@ -1,0 +1,69 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "codepractice"
+version = "0.1.0"
+description = "An adaptive, AI-powered CLI coding practice platform"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "codepractice" }]
+keywords = ["cli", "coding", "practice", "ai", "leetcode", "python", "learning"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Education",
+    "Topic :: Software Development :: Libraries",
+]
+
+dependencies = [
+    "textual>=0.47.0",
+    "rich>=13.7.0",
+    "ollama>=0.2.0",
+    "openai>=1.12.0",
+    "pydantic>=2.5.0",
+    "typer>=0.9.0",
+    "questionary>=2.0.1",
+    "pygments>=2.17.0",
+    "pyfiglet>=1.0.2",
+    "python-dotenv>=1.0.0",
+    "httpx>=0.26.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.23.0",
+    "textual-dev>=0.47.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.2.0",
+]
+
+[project.scripts]
+codepractice = "codepractice.main:app"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["codepractice*"]
+
+[tool.setuptools.package-data]
+codepractice = ["tui/*.tcss", "tui/**/*.tcss"]
+"*" = ["data/problems/*.json"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]
+ignore = ["E501"]
