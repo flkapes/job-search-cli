@@ -76,7 +76,6 @@ class JobDescContent(Widget):
         # Save JD
         try:
             from codepractice.db.database import get_db
-            from codepractice.db.repositories.base import BaseRepository
             db = get_db()
             with db.get_connection() as conn:
                 conn.execute(

@@ -6,7 +6,7 @@ from textual.app import ComposeResult
 from textual.containers import Horizontal
 from textual.reactive import reactive
 from textual.widget import Widget
-from textual.widgets import Label, Static
+from textual.widgets import Label
 
 
 class AppHeader(Widget):

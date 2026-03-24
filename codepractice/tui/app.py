@@ -7,7 +7,6 @@ from pathlib import Path
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, Horizontal
-from textual.screen import Screen
 
 from codepractice.db.database import get_db
 from codepractice.db.repositories import (
@@ -20,7 +19,6 @@ from codepractice.db.repositories import (
 from codepractice.llm.client import LLMClient, get_client
 from codepractice.tui.widgets.header import AppHeader
 from codepractice.tui.widgets.sidebar import SidebarNav
-
 
 CSS_PATH = Path(__file__).parent / "theme.tcss"
 
@@ -35,6 +33,7 @@ class CodePracticeApp(App):
     BINDINGS = [
         Binding("d", "goto('dashboard')", "Dashboard", show=True),
         Binding("p", "goto('practice')", "Practice", show=False),
+        Binding("r", "goto('review')", "Review", show=False),
         Binding("t", "goto('python_track')", "Python Track", show=False),
         Binding("a", "goto('dsa_training')", "DSA", show=False),
         Binding("l", "goto('learning_plan')", "Learn", show=False),
@@ -47,12 +46,13 @@ class CodePracticeApp(App):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._db = get_db()
-        self.problem_repo = ProblemRepository(self._db)
-        self.session_repo = SessionRepository(self._db)
-        self.profile_repo = ProfileRepository(self._db)
-        self.plan_repo = LearningPlanRepository(self._db)
-        self.chat_repo = ChatHistoryRepository(self._db)
+        self.db = get_db()
+        self._db = self.db  # backward-compat alias
+        self.problem_repo = ProblemRepository(self.db)
+        self.session_repo = SessionRepository(self.db)
+        self.profile_repo = ProfileRepository(self.db)
+        self.plan_repo = LearningPlanRepository(self.db)
+        self.chat_repo = ChatHistoryRepository(self.db)
         self._llm: LLMClient | None = None
         self._llm_online = False
 
@@ -131,6 +131,9 @@ class CodePracticeApp(App):
         elif name == "practice":
             from codepractice.tui.screens.practice import PracticeContent
             return PracticeContent()
+        elif name == "review":
+            from codepractice.tui.screens.practice import PracticeContent
+            return PracticeContent(review_mode=True)
         elif name == "python_track":
             from codepractice.tui.screens.python_track import PythonTrackContent
             return PythonTrackContent()

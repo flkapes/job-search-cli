@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from textual.app import ComposeResult
-from textual.containers import Horizontal, Vertical, VerticalScroll
+from textual.containers import Horizontal, VerticalScroll
 from textual.widget import Widget
 from textual.widgets import Button, DataTable, Label, Static
 
+from codepractice.core.spaced_repetition import get_review_stats
 from codepractice.tui.widgets.stats_panel import PlanProgress, StatsRow
 from codepractice.tui.widgets.welcome_banner import WelcomeBanner
 
@@ -60,6 +61,8 @@ class DashboardContent(Widget):
 
             yield PlanProgress(id="dashboard-plan")
 
+            yield Static("", id="review-banner")
+
             yield Label("[bold]Recent Activity[/bold]", classes="panel-title")
             yield DataTable(id="recent-activity")
 
@@ -67,6 +70,7 @@ class DashboardContent(Widget):
         self._load_stats()
         self._load_plan()
         self._load_recent()
+        self._load_review_banner()
 
     def _load_stats(self) -> None:
         app = self.app
@@ -123,6 +127,21 @@ class DashboardContent(Widget):
                 table.add_row("—", "No sessions yet", "—", "—")
         except Exception:
             table.add_row("—", "No data", "—", "—")
+
+    def _load_review_banner(self) -> None:
+        try:
+            stats = get_review_stats(self.app.db)
+            due = stats.get("due_today", 0)
+            banner = self.query_one("#review-banner", Static)
+            if due > 0:
+                banner.update(
+                    f"[bold #d29922]🔁 {due} problem{'s' if due != 1 else ''} due for review today[/bold #d29922]"
+                    "  [#8b949e]— press [bold]R[/bold] to start review session[/#8b949e]"
+                )
+            else:
+                banner.update("[#8b949e]No reviews due today.[/#8b949e]")
+        except Exception:
+            pass
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         screen_map = {
