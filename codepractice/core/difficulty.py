@@ -62,6 +62,14 @@ def get_weak_areas(category_scores: list[dict]) -> list[str]:
     return [area for area, _ in scored[:3]]
 
 
+def should_show_weak_area_drill(category_scores: list[dict]) -> bool:
+    """Return True if there is at least one area with 2+ attempts and avg_score < 0.6."""
+    return any(
+        r.get("attempts", 0) >= 2 and r.get("avg_score", 1.0) < 0.6
+        for r in category_scores
+    )
+
+
 def get_strong_areas(category_scores: list[dict]) -> list[str]:
     """Return categories/subcategories with highest average scores."""
     scored = [

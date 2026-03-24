@@ -90,6 +90,22 @@ class ProblemRepository(BaseRepository):
             count += 1
         return count
 
+    def save_note(self, problem_id: int, text: str) -> None:
+        """Persist freeform user notes for a problem."""
+        self._update(
+            "UPDATE problems SET user_notes = ? WHERE id = ?",
+            (text, problem_id),
+        )
+
+    def get_note(self, problem_id: int) -> str:
+        """Return the user note for a problem, or '' if none."""
+        row = self._execute_one(
+            "SELECT user_notes FROM problems WHERE id = ?", (problem_id,)
+        )
+        if row is None:
+            return ""
+        return row["user_notes"] or ""
+
     @staticmethod
     def _parse_row(row) -> dict | None:
         if row is None:
