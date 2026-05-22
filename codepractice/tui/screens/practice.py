@@ -80,6 +80,7 @@ class PracticeContent(Widget):
     BINDINGS = [
         Binding("h", "show_hint", "Hint", show=True),
         Binding("n", "next_problem", "Next", show=True),
+        Binding("ctrl+enter", "submit_code", "Submit", show=False),
         Binding("escape", "back_to_problem", "Back", show=False),
     ]
 
@@ -247,7 +248,7 @@ class PracticeContent(Widget):
         elif btn == "btn-hint":
             self.action_show_hint()
         elif btn == "btn-submit":
-            self._submit_code()
+            self.action_submit_code()
         elif btn == "btn-back-problem":
             self.action_back_to_problem()
         elif btn == "btn-retry":
@@ -266,7 +267,7 @@ class PracticeContent(Widget):
             self._hide_rating_bar()
 
     def on_code_editor_code_submitted(self, event: CodeEditor.CodeSubmitted) -> None:
-        self._submit_code()
+        self.action_submit_code()
 
     def _enter_coding(self) -> None:
         self._code_start_time = time.time()
@@ -276,6 +277,10 @@ class PracticeContent(Widget):
         editor.query_one("#code-input").focus()
 
     def _submit_code(self) -> None:
+        # Prevent duplicate submissions once we have already left the coding phase.
+        if self.current_phase != "coding":
+            return
+
         code = self.query_one("#code-editor", CodeEditor).get_code()
         if not code.strip():
             return
@@ -362,3 +367,8 @@ class PracticeContent(Widget):
     def action_back_to_problem(self) -> None:
         if self.current_phase == "coding":
             self._show_phase("problem")
+
+    def action_submit_code(self) -> None:
+        if self.current_phase != "coding":
+            return
+        self._submit_code()
