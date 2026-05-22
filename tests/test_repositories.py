@@ -232,3 +232,27 @@ class TestProfileRepository:
         repo.create({"name": "Dan"})
         repo.create({"name": "Dave"})  # INSERT OR REPLACE
         assert repo.get()["name"] == "Dave"
+
+from codepractice.db.repositories.goal_history import GoalHistoryRepository
+
+
+class TestGoalHistoryRepository:
+    def test_create_and_list_recent(self, tmp_db):
+        repo = GoalHistoryRepository(tmp_db)
+        repo.create_entry("Become backend-ready", "Initial summary")
+        rows = repo.list_recent()
+        assert len(rows) == 1
+        assert rows[0]["goal_text"] == "Become backend-ready"
+
+    def test_list_for_plan_filters(self, tmp_db):
+        from codepractice.db.repositories.learning_plans import LearningPlanRepository
+
+        repo = GoalHistoryRepository(tmp_db)
+        plan_repo = LearningPlanRepository(tmp_db)
+        p1 = plan_repo.create({"title": "P1", "duration_days": 14, "plan": {}})
+        p2 = plan_repo.create({"title": "P2", "duration_days": 14, "plan": {}})
+        repo.create_entry("Goal A", "S1", plan_id=p1)
+        repo.create_entry("Goal B", "S2", plan_id=p2)
+        plan_rows = repo.list_for_plan(p1)
+        assert len(plan_rows) == 1
+        assert plan_rows[0]["goal_text"] == "Goal A"

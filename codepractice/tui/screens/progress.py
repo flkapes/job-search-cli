@@ -134,6 +134,9 @@ class ProgressContent(Widget):
             yield Static("", id="weak-areas-display", classes="chart-panel")
             yield Button("🎯 Fix My Gaps", id="btn-drill-weak", classes="primary-btn", disabled=True)
 
+            yield Label("\n[bold]Goal History / Drift[/bold]", classes="panel-title")
+            yield Static("", id="goal-history-panel", classes="chart-panel")
+
             yield Label("\n[bold]Recent Sessions[/bold]", classes="panel-title")
             yield DataTable(id="session-history")
 
@@ -146,6 +149,7 @@ class ProgressContent(Widget):
         self._load_mastery()
         self._load_sessions()
         self._load_weak_areas()
+        self._load_goal_history()
 
     def _load_stats(self) -> None:
         try:
@@ -288,5 +292,21 @@ class ProgressContent(Widget):
             if cat:
                 widget._drill_category = cat
                 widget._drill_subcategory = sub
+        except Exception:
+            pass
+
+
+    def _load_goal_history(self) -> None:
+        try:
+            entries = self.app.goal_history_repo.list_recent(limit=6)
+            if not entries:
+                self.query_one("#goal-history-panel", Static).update("[#8b949e]No goal updates yet.[/#8b949e]")
+                return
+            lines = []
+            for e in entries:
+                created = str(e.get("created_at", ""))[:16]
+                goal = e.get("goal_text", "")
+                lines.append(f"  {created} • {goal[:80]}")
+            self.query_one("#goal-history-panel", Static).update("\n".join(lines))
         except Exception:
             pass
