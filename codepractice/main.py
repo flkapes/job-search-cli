@@ -355,7 +355,11 @@ def goal(
     from codepractice.core.difficulty import get_weak_areas
     from codepractice.core.models import LearningPlan
     from codepractice.db import get_db
-    from codepractice.db.repositories import GoalHistoryRepository, LearningPlanRepository, SessionRepository
+    from codepractice.db.repositories import (
+        GoalHistoryRepository,
+        LearningPlanRepository,
+        SessionRepository,
+    )
     from codepractice.llm.client import get_client
     from codepractice.llm.services.plan_manager import LearningPlanManager
 
