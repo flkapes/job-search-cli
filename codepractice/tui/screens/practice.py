@@ -173,7 +173,12 @@ class PracticeContent(Widget):
         sub = getattr(self, "_drill_subcategory", None)
         self._load_next_problem(category=cat, subcategory=sub)
 
-    def _load_next_problem(self, category: str | None = None, difficulty: str | None = None, subcategory: str | None = None) -> None:
+    def _load_next_problem(
+        self,
+        category: str | None = None,
+        difficulty: str | None = None,
+        subcategory: str | None = None,
+    ) -> None:
         self._show_phase("loading")
         self._hints_used = 0
 
@@ -188,7 +193,9 @@ class PracticeContent(Widget):
                     return
 
         # Try to get a problem from the database
-        problem_data = self.app.problem_repo.get_random(category=category, difficulty=difficulty)
+        problem_data = self.app.problem_repo.get_random(
+            category=category, subcategory=subcategory, difficulty=difficulty
+        )
         if problem_data:
             self._problem = Problem.from_db(problem_data)
             self._show_problem()

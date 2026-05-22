@@ -79,6 +79,45 @@ class TestProblemRepository:
         assert result is not None
         assert result["title"] == "Two Sum"
 
+
+    def test_get_random_with_subcategory_filter(self, tmp_db):
+        repo = ProblemRepository(tmp_db)
+        repo.create(_problem_data(subcategory="dynamic_programming", title="Coin Change"))
+        repo.create(_problem_data(subcategory="graphs", title="DFS"))
+
+        result = repo.get_random(category="dsa", subcategory="dynamic_programming")
+        assert result is not None
+        assert result["category"] == "dsa"
+        assert result["subcategory"] == "dynamic_programming"
+
+
+    def test_get_random_with_category_subcategory_and_difficulty(self, tmp_db):
+        repo = ProblemRepository(tmp_db)
+        repo.create(
+            _problem_data(
+                category="dsa",
+                subcategory="dynamic_programming",
+                difficulty="hard",
+                title="DP Hard",
+            )
+        )
+        repo.create(
+            _problem_data(
+                category="dsa",
+                subcategory="dynamic_programming",
+                difficulty="easy",
+                title="DP Easy",
+            )
+        )
+
+        result = repo.get_random(
+            category="dsa",
+            subcategory="dynamic_programming",
+            difficulty="hard",
+        )
+        assert result is not None
+        assert result["title"] == "DP Hard"
+
     def test_get_random_empty_returns_none(self, tmp_db):
         repo = ProblemRepository(tmp_db)
         assert repo.get_random() is None
