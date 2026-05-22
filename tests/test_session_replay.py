@@ -104,3 +104,24 @@ class TestGetAttemptsForSession:
         attempts = sess_repo.get_attempts_for_session(sid)
         codes = [a["user_code"] for a in attempts]
         assert codes.index("first") < codes.index("second")
+
+
+class TestGetLatestAttemptForSession:
+    def test_returns_latest_attempt_with_problem_title(self, tmp_db):
+        prob_repo = ProblemRepository(tmp_db)
+        sess_repo = SessionRepository(tmp_db)
+
+        pid = prob_repo.create({"category": "dsa", "title": "Merge Intervals", "description": "D"})
+        sid = sess_repo.start_session()
+        sess_repo.record_attempt({"session_id": sid, "problem_id": pid, "user_code": "first", "ai_feedback": "", "ai_score": 0.2})
+        sess_repo.record_attempt({"session_id": sid, "problem_id": pid, "user_code": "second", "ai_feedback": "latest", "ai_score": 0.9})
+
+        latest = sess_repo.get_latest_attempt_for_session(sid)
+        assert latest is not None
+        assert latest["user_code"] == "second"
+        assert latest["problem_title"] == "Merge Intervals"
+
+    def test_returns_none_when_session_has_no_attempts(self, tmp_db):
+        sess_repo = SessionRepository(tmp_db)
+        sid = sess_repo.start_session()
+        assert sess_repo.get_latest_attempt_for_session(sid) is None

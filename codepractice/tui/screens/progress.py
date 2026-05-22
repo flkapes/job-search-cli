@@ -119,6 +119,8 @@ class ProgressContent(Widget):
     }
     """
 
+    _session_row_ids: list[int | None] = []
+
     def compose(self) -> ComposeResult:
         with VerticalScroll():
             yield Label("[bold #58a6ff]📊 Your Progress[/bold #58a6ff]\n")
@@ -215,10 +217,12 @@ class ProgressContent(Widget):
         table = self.query_one("#session-history", DataTable)
         table.clear(columns=True)
         table.add_columns("Date", "Type", "Problems", "Solved", "Duration")
+        self._session_row_ids = []
         try:
             sessions = self.app.session_repo.get_recent_sessions(limit=10)
             for s in sessions:
                 started = str(s.get("started_at", ""))[:16]
+                self._session_row_ids.append(s.get("id"))
                 table.add_row(
                     started,
                     s.get("session_type", "free"),
@@ -227,9 +231,10 @@ class ProgressContent(Widget):
                     "—",
                 )
             if not sessions:
+                self._session_row_ids.append(None)
                 table.add_row("—", "No sessions yet", "—", "—", "—")
         except Exception:
-            pass
+            self._session_row_ids = []
 
     def _load_weak_areas(self) -> None:
         try:
@@ -263,8 +268,21 @@ class ProgressContent(Widget):
         """Open replay modal when a session row is clicked."""
         table = event.data_table
         if table.id == "session-history":
-            # Not implemented: session → attempt listing (no row key stored)
-            pass
+            row_index = event.cursor_row
+            if row_index < 0 or row_index >= len(self._session_row_ids):
+                return
+            session_id = self._session_row_ids[row_index]
+            if not session_id:
+                return
+
+            try:
+                attempt = self.app.session_repo.get_latest_attempt_for_session(session_id)
+                if attempt:
+                    self.app.push_screen(ReplayModal(attempt))
+                else:
+                    self.notify("No attempts found for this session yet.", severity="information")
+            except Exception:
+                self.notify("Could not load session replay.", severity="error")
 
     def _start_weak_area_drill(self) -> None:
         """Launch practice pre-filtered to the weakest category."""
@@ -288,10 +306,10 @@ class ProgressContent(Widget):
             content.mount(widget)
             # start_session with weak_area_drill type
             widget._init_session_type = "weak_area_drill"
-            widget.call_later(widget._init_session)
             if cat:
                 widget._drill_category = cat
                 widget._drill_subcategory = sub
+            widget.call_later(widget._init_session)
         except Exception:
             pass
 

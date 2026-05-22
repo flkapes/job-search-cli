@@ -125,6 +125,20 @@ class SessionRepository(BaseRepository):
             )
         )
 
+    def get_latest_attempt_for_session(self, session_id: int) -> dict | None:
+        """Return the most recent attempt for a session, including problem title."""
+        return self.row_to_dict(
+            self._execute_one(
+                """SELECT pa.*, p.title AS problem_title
+                   FROM problem_attempts pa
+                   LEFT JOIN problems p ON pa.problem_id = p.id
+                   WHERE pa.session_id = ?
+                   ORDER BY pa.attempted_at DESC, pa.id DESC
+                   LIMIT 1""",
+                (session_id,),
+            )
+        )
+
     def get_sessions_by_type(self, session_type: str) -> list[dict]:
         """Return all sessions of a given type."""
         return self.rows_to_dicts(
