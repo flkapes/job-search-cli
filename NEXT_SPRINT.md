@@ -1,177 +1,117 @@
 # Next Sprint — Implementation Queue
 
-Features ready to build, in rough priority order. All are low-risk, additive,
-and touch existing data/services with minimal new infrastructure.
+Features currently pending implementation, in rough priority order.
+
+> **Source of truth:** `ROADMAP.md` is aspirational and includes future ideas.
+> `README.md` reflects currently released capabilities.
 
 ---
 
-## 1. Offline Problem Cache
+## Done (completed 2026-05-22)
 
-**Command:** `codepractice prefetch --count 20`
+- ✅ **Offline Problem Cache** (`codepractice prefetch --count N`) with optional
+  `--category` and `--difficulty` filters.
+- ✅ **Session Replay** modal from Progress screen attempt rows.
+- ✅ **Personal Notes on Problems** persisted via `problems.user_notes`.
+- ✅ **Weak-Area Auto-Drill** (“Fix My Gaps” targeted drill flow).
+- ✅ **Daily Digest Command** (`codepractice digest`) with LLM-offline fallback.
+- ✅ **Progress Markdown Export** (`codepractice export --format md`).
+- ✅ **Code Diff / Suggested Approach View** using parsed `optimized_solution`.
+- ✅ **Per-Problem Personal Difficulty Rating** (1–5) stored on attempts.
+- ✅ **Freeform Interview Question Generation** (JD/Resume) with draft persistence.
 
-Hit the LLM once to pre-generate and store problems while it's warm. Normal
-practice then works even when Ollama is cold or unavailable.
+### Verification snapshot (code paths)
 
-**Implementation notes:**
-- Loop `ProblemGeneratorService` N times across categories/difficulties
-- Write results to `problems` table with `source = "ai_generated"`
-- Show a Rich progress bar during generation
-- Add `--category` and `--difficulty` flags for targeted prefetching
-- No new DB schema needed
-
----
-
-## 2. Session Replay
-
-**Location:** Progress screen — click any past attempt row to open a detail view
-
-Show the user's submitted code and the AI feedback they received, side by side.
-All data already lives in `problem_attempts`. Zero new storage, pure display.
-
-**Implementation notes:**
-- Add a `ReplayModal` (Textual `ModalScreen`) with two panels:
-  left = `CodeEditor` (read-only), right = `StreamingOutput` (static text)
-- `DataTable` row selection on the Progress screen triggers the modal
-- Pull `user_code` and `ai_feedback` from the attempt row by ID
-- Include problem title, score, hints used, and time spent in a header bar
+- CLI commands: `codepractice/main.py` (`prefetch`, `digest`, `export`). 
+- Replay + weak-area drill UI: `codepractice/tui/screens/progress.py`.
+- Diff view + personal difficulty rating UI: `codepractice/tui/screens/practice.py`.
+- Freeform question UI + draft modal: `codepractice/tui/screens/job_desc.py`,
+  `codepractice/tui/screens/resume_drill.py`.
+- Persistence: migrations in `codepractice/db/migrations/005_*.sql`,
+  `006_*.sql`, `007_*.sql`; repositories in `codepractice/db/repositories/`.
 
 ---
 
-## 3. Personal Notes on Problems
+## 1. Interview Simulation Mode
 
-**Location:** Problem card — small collapsible "My Notes" section
+**Location:** Practice flow (new mode toggle)
 
-A persistent freeform text field per problem. Surfaces when the same problem
-appears again (practice or review mode).
+A timed, no-hints practice mode that mirrors real interview conditions.
 
 **Implementation notes:**
-- Migration: `ALTER TABLE problems ADD COLUMN user_notes TEXT DEFAULT ''`
-- `ProblemRepository.save_note(problem_id, text)` and `get_note(problem_id)`
-- `ProblemCard` widget gains a collapsible `TextArea` at the bottom
-- Auto-save on blur (no explicit save button)
-- Show note in the replay modal too
+- Add session mode selector for normal vs interview simulation
+- Disable hints in simulation mode and track any peek attempts
+- Add countdown timer in header with state colors
+- Generate end-of-session scorecard with pass/fail + category breakdown
+- Store with dedicated `session_type = "interview_simulation"`
 
 ---
 
-## 4. Weak-Area Auto-Drill
+## 2. Gamification — XP & Achievements
 
-**Location:** Progress screen — "Fix My Gaps" button
+**Location:** Progress screen + attempt completion flow
 
-Calls the existing `get_weak_areas()` function, then launches practice
-pre-filtered to that category/subcategory. Wires two things that already exist
-but aren't connected.
+Keeps motivation high across long preparation streaks.
 
 **Implementation notes:**
-- Button appears only when `get_category_scores()` returns ≥ 1 area with
-  2+ attempts and avg score < 0.6
-- Passes `category` and `subcategory` to `PracticeContent._load_next_problem()`
-- Label shows which area is being drilled: "Drilling: dsa / dynamic_programming"
-- Session recorded with `session_type = "weak_area_drill"` for separate tracking
+- Add XP accrual rules by difficulty × score
+- Persist level + XP history in new tables
+- Add achievement unlock engine with milestone definitions
+- Show unlock toasts and an achievements gallery screen section
+- Add XP trend chart in Progress
 
 ---
 
-## 5. Daily Digest Command
+## 3. Goal Evolution Tracking
 
-**Command:** `codepractice digest`
+**Location:** Learning Plan + Progress + CLI
 
-Non-TUI Rich output: streak status, today's plan theme, review queue size,
-and one short LLM-generated motivational tip based on recent performance.
-Fast, scriptable, `.bashrc`-friendly.
+Makes the learning plan truly adaptive over time.
 
 **Implementation notes:**
-- New Typer subcommand in `main.py`
-- Pulls stats from `SessionRepository.get_stats()`, active plan from
-  `LearningPlanRepository.get_active()`, review count from `get_review_stats()`
-- Single LLM call via `ChatService` with a short "morning briefing" prompt
-  that includes streak, weak areas, and today's plan theme
-- Falls back gracefully if LLM is offline (prints stats without the tip)
-- Rich Panel layout: stats on left, tip on right
+- Add `goal_history` persistence and retrieval
+- Add CLI command to update goal text and trigger plan evolution
+- Add "Update Goal" action in learning plan UI
+- Surface week-over-week drift summary in Progress
 
 ---
 
-## 6. Progress Markdown Export
+## 4. Company-Specific Prep Profiles
 
-**Command:** `codepractice export --format md`
+**Location:** New company browser + Learning Plan integrations
 
-Extends the existing JSON exporter to render a human-readable progress report
-suitable for a dev journal, README, or LinkedIn post.
+Tailored problem sets for specific employers.
 
 **Implementation notes:**
-- New `--format` flag on the existing `export` Typer command (default: `json`)
-- Renders using Rich's `Markdown` or plain string building:
-  - 30-day streak chart (reuse existing activity data)
-  - Category mastery table (solved / attempted / avg score per category)
-  - Top 5 solved problems with scores
-  - Active plan progress
-  - Spaced repetition queue summary
-- Output to file: `~/.codepractice/exports/report_YYYY-MM-DD.md`
+- Add `data/companies.json` with interview pattern metadata
+- Build searchable company browser view
+- One-click targeted plan generation from company profile
+- Integrate with JD flow for combined prep
 
 ---
 
-## 7. Code Diff View After Evaluation
+## 5. Multi-Language Practice Support
 
-**Location:** Feedback phase of the practice screen
+**Location:** Practice screen + code runner + evaluator
 
-After AI evaluation streams, if the response contains an `optimized_solution`
-code block, render a before/after comparison using Rich `Columns`.
+Extend beyond Python to common interview languages.
 
 **Implementation notes:**
-- The evaluator prompt already requests `optimized_solution` in its JSON —
-  parse it out in `_evaluate_code()` using the existing `extract_json()` helper
-- If present, append a "Suggested Approach" panel below the feedback stream
-  using `StreamingOutput.write_line()` with syntax-highlighted code via
-  Rich `Syntax`
-- Only show if user's score < 0.9 (no need to show diff on near-perfect solves)
-- No new LLM calls; pure rendering improvement
+- Add language selector on problem card
+- Add runner/evaluator adapters for JavaScript and Go first
+- Extend prompting and syntax highlighting per language
+- Ensure persistence tracks chosen language per attempt
 
 ---
 
-## 8. Per-Problem Personal Difficulty Rating
+## 6. Problem Bookmarking & Solution Library
 
-**Location:** Feedback phase — appears after evaluation completes
+**Location:** Practice + new "My Library" screen
 
-A 1–5 prompt: "How hard did *you* find this?" Stored alongside the AI score.
-Over time, surfaces problems where perceived difficulty diverges from the label.
-
-**Implementation notes:**
-- Migration: `ALTER TABLE problem_attempts ADD COLUMN user_difficulty_rating
-  INTEGER DEFAULT NULL`
-- `SessionRepository.set_difficulty_rating(attempt_id, rating)`
-- Post-feedback, show 5 styled `Button` widgets (⬡ × 5) in the action bar;
-  selecting one records the rating and enables the "Next Problem" button
-- Progress screen gains a "Mislabeled problems" section: problems where
-  `AVG(user_difficulty_rating)` is 2+ steps away from the stored difficulty
-- Rating is optional — "Skip" button dismisses without recording
-
----
-
-## 9. Freeform Question Generation from Job Description or Resume Project
-
-**Location:** Job Description screen and Resume Drill screen
-
-Instead of only generating LeetCode-style coding problems, generate **freeform
-interview questions** — behavioural, system design, conceptual, and situational
-— drawn directly from the job description or a specific resume project.
-
-**Use cases:**
-- "Given this JD, what system design questions might they ask me?"
-- "I built a Redis-backed rate limiter on my resume — what follow-up questions
-  should I be ready for?"
-- Generates questions across types: technical deep-dives, trade-off discussions,
-  failure/learning stories, architecture decisions
+Save and revisit favorite problems and your own solutions.
 
 **Implementation notes:**
-- New prompt in `llm/prompts/problem_gen.py`: `freeform_questions_prompt(source,
-  text, question_types, count)` where `question_types` is a list like
-  `["system_design", "behavioural", "conceptual"]`
-- New service method: `ProblemGeneratorService.generate_freeform_questions()`
-  returns a list of `{"question": str, "type": str, "follow_ups": [str]}`
-- New tab/toggle on the Job Description and Resume Drill screens:
-  "Coding Problems" vs "Interview Questions"
-- Questions displayed in a `DataTable`; clicking one opens a `ModalScreen`
-  with the question, follow-ups, and a `TextArea` for the user to draft
-  their answer
-- Draft answers saved to a new `question_drafts` table
-  (question_hash, source_type, draft_text, updated_at)
-- Optional: LLM rates the draft answer with brief feedback (same evaluator
-  pattern as code evaluation)
+- Add bookmark toggle in problem card
+- Persist saved problem IDs and associated user solutions
+- Create library screen with filter/sort by tag/difficulty/category
+- Add side-by-side comparison with AI suggested solution
