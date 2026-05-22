@@ -52,6 +52,7 @@ class DashboardContent(Widget):
             yield Label("[bold]Quick Start[/bold]", classes="panel-title")
             with Horizontal(classes="action-grid"):
                 yield QuickAction("⚡ Free Practice", id="qa-practice")
+                yield QuickAction("🧪 Interview Sim", id="qa-sim")
                 yield QuickAction("🐍 Python Track", id="qa-python")
                 yield QuickAction("🧩 DSA Patterns", id="qa-dsa")
             with Horizontal(classes="action-grid"):
@@ -146,6 +147,7 @@ class DashboardContent(Widget):
     def on_button_pressed(self, event: Button.Pressed) -> None:
         screen_map = {
             "qa-practice": "practice",
+            "qa-sim": "interview_simulation",
             "qa-python": "python_track",
             "qa-dsa": "dsa_training",
             "qa-resume": "resume_drill",

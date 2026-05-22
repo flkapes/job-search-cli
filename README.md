@@ -55,6 +55,13 @@ Chat with your AI coding coach. It knows your profile, current plan, recent perf
 - Weak area identification
 - Session history
 
+### 🧪 Interview Simulation Mode
+- Timed interview-style practice sessions from Dashboard (**Interview Sim**)
+- Countdown timer with color states (green → yellow → red)
+- Hints disabled in simulation mode (peek attempts tracked as penalty metadata)
+- Early finish action + automatic timeout end
+- End-of-session scorecard with attempted/solved, average score, and category breakdown
+
 ---
 
 ## 🛠 Tech Stack
@@ -150,6 +157,7 @@ LMSTUDIO_MODEL=local-model
 |-----|--------|
 | `d` | Dashboard |
 | `p` | Free Practice |
+| `d` → Dashboard Quick Action | Interview Simulation entry |
 | `t` | Python Track |
 | `a` | DSA Training |
 | `l` | Learning Plan |

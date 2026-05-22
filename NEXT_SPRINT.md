@@ -32,18 +32,18 @@ Features currently pending implementation, in rough priority order.
 
 ---
 
-## 1. Interview Simulation Mode
+## 1. Interview Simulation Mode ✅ (completed 2026-05-22)
 
 **Location:** Practice flow (new mode toggle)
 
 A timed, no-hints practice mode that mirrors real interview conditions.
 
 **Implementation notes:**
-- Add session mode selector for normal vs interview simulation
-- Disable hints in simulation mode and track any peek attempts
-- Add countdown timer in header with state colors
-- Generate end-of-session scorecard with pass/fail + category breakdown
-- Store with dedicated `session_type = "interview_simulation"`
+- Added dashboard entry for interview simulation mode
+- Added countdown timer + lock behavior with explicit finish action
+- Disabled hints in simulation mode and tracked peek attempts penalty
+- Added scorecard aggregation (attempted/solved/avg/category + pass/fail)
+- Stored sessions with `session_type = "interview_simulation"` and metadata
 
 ---
 

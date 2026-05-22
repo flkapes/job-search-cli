@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from codepractice.db.repositories.base import BaseRepository
@@ -9,10 +10,15 @@ from codepractice.db.repositories.base import BaseRepository
 
 class SessionRepository(BaseRepository):
 
-    def start_session(self, session_type: str = "free", plan_id: int | None = None) -> int:
+    def start_session(
+        self,
+        session_type: str = "free",
+        plan_id: int | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> int:
         return self._insert(
-            "INSERT INTO practice_sessions (session_type, plan_id) VALUES (?, ?)",
-            (session_type, plan_id),
+            "INSERT INTO practice_sessions (session_type, plan_id, metadata_json) VALUES (?, ?, ?)",
+            (session_type, plan_id, json.dumps(metadata or {})),
         )
 
     def end_session(self, session_id: int, total: int, solved: int, notes: str = "") -> None:
@@ -124,6 +130,33 @@ class SessionRepository(BaseRepository):
                 (session_id,),
             )
         )
+
+    def get_scorecard(self, session_id: int) -> dict[str, Any]:
+        totals = self.row_to_dict(
+            self._execute_one(
+                """SELECT COUNT(*) AS attempted,
+                          COALESCE(SUM(CASE WHEN passed = 1 THEN 1 ELSE 0 END), 0) AS solved,
+                          COALESCE(AVG(ai_score), 0.0) AS avg_score
+                   FROM problem_attempts
+                   WHERE session_id = ?""",
+                (session_id,),
+            )
+        ) or {}
+        breakdown = self.rows_to_dicts(
+            self._execute(
+                """SELECT p.category AS category,
+                          COUNT(*) AS attempted,
+                          COALESCE(SUM(CASE WHEN pa.passed = 1 THEN 1 ELSE 0 END), 0) AS solved,
+                          COALESCE(AVG(pa.ai_score), 0.0) AS avg_score
+                   FROM problem_attempts pa
+                   JOIN problems p ON p.id = pa.problem_id
+                   WHERE pa.session_id = ?
+                   GROUP BY p.category
+                   ORDER BY attempted DESC, category ASC""",
+                (session_id,),
+            )
+        )
+        return {"attempted": totals.get("attempted", 0), "solved": totals.get("solved", 0), "avg_score": totals.get("avg_score", 0.0), "category_breakdown": breakdown}
 
     def get_latest_attempt_for_session(self, session_id: int) -> dict | None:
         """Return the most recent attempt for a session, including problem title."""
