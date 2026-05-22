@@ -69,6 +69,7 @@ class LearningPlanContent(Widget):
             with Horizontal():
                 yield Button("▶ Start Today's Practice", id="btn-start-day", classes="primary-btn")
                 yield Button("🔄 Evolve Plan", id="btn-evolve", classes="secondary-btn")
+                yield Button("🎯 Update Goal", id="btn-update-goal", classes="secondary-btn")
                 yield Button("⏸ Pause Plan", id="btn-pause", classes="secondary-btn")
 
     def on_mount(self) -> None:
@@ -126,6 +127,8 @@ class LearningPlanContent(Widget):
             self._evolve_plan()
         elif event.button.id == "btn-pause":
             self._pause_plan()
+        elif event.button.id == "btn-update-goal":
+            self._update_goal()
 
     def _create_plan(self) -> None:
         goal = self.query_one("#plan-goal-input", Input).value
@@ -228,3 +231,15 @@ class LearningPlanContent(Widget):
                 self._load_active_plan()
         except Exception:
             pass
+
+
+    def _update_goal(self) -> None:
+        goal = self.query_one("#plan-goal-input", Input).value.strip()
+        stream = self.query_one("#plan-gen-output", StreamingOutput)
+        if not goal:
+            stream.show_error("Enter a revised goal in the goal input field first.")
+            return
+        plan = self.app.plan_repo.get_active()
+        plan_id = plan["id"] if plan else None
+        self.app.goal_history_repo.create_entry(goal, "Goal updated from Learning Plan screen", plan_id=plan_id)
+        stream.show_info("Goal update recorded. Use Evolve Plan to refresh schedule.")

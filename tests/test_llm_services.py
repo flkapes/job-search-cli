@@ -164,3 +164,17 @@ class TestPlanManagerService:
         plan = svc.create_plan("Learn Python", duration_days=5)
         assert plan is not None
         assert len(plan.daily_schedule) == 5
+
+    def test_evolve_plan_for_goal_shift_fallback(self):
+        client = MockLLMClient(fail=True)
+        svc = PlanManagerService(client)
+        plan = PlanManagerService._default_plan("Base goal", 5)
+        updated = svc.evolve_plan_for_goal_shift(
+            plan=plan,
+            current_goal="New goal",
+            recent_goals=[{"goal_text": "Old goal"}],
+            performance_summary="Avg score 50%",
+            weak_areas=["dsa/graphs"],
+        )
+        assert isinstance(updated, LearningPlan)
+        assert len(updated.daily_schedule) == len(plan.daily_schedule)

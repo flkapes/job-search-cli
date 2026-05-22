@@ -346,6 +346,61 @@ def _run_setup_wizard(force: bool = False) -> None:
     console.print("  Run [bold]codepractice[/bold] to launch the TUI.\n")
 
 
+@app.command()
+def goal(
+    goal_text: str = typer.Argument(..., help="New/updated learning goal in natural language"),
+    regenerate: bool = typer.Option(True, "--regenerate/--no-regenerate", help="Regenerate active plan"),
+):
+    """Record a goal update and optionally regenerate the active learning plan."""
+    from codepractice.core.difficulty import get_weak_areas
+    from codepractice.core.models import LearningPlan
+    from codepractice.db import get_db
+    from codepractice.db.repositories import (
+        GoalHistoryRepository,
+        LearningPlanRepository,
+        SessionRepository,
+    )
+    from codepractice.llm.client import get_client
+    from codepractice.llm.services.plan_manager import LearningPlanManager
+
+    db = get_db()
+    plan_repo = LearningPlanRepository(db)
+    history_repo = GoalHistoryRepository(db)
+    session_repo = SessionRepository(db)
+
+    active = plan_repo.get_active()
+    plan_id = active["id"] if active else None
+    summary = f"Goal updated via CLI at runtime. Regenerate={regenerate}"
+    history_repo.create_entry(goal_text=goal_text, plan_summary=summary, plan_id=plan_id)
+    console.print("[green]✓[/green] Goal history entry saved.")
+
+    if not regenerate:
+        return
+
+    if not active:
+        console.print("[yellow]⚠[/yellow] No active plan to regenerate.")
+        return
+
+    lp = LearningPlan(
+        id=active["id"],
+        title=active["title"],
+        natural_language_goal=active.get("natural_language_goal", ""),
+        duration_days=active.get("duration_days", 30),
+        current_day=active.get("current_day", 1),
+    )
+
+    stats = session_repo.get_stats()
+    scores = session_repo.get_category_scores()
+    weak = get_weak_areas(scores)
+    perf = f"Avg score: {stats['avg_score']}%, Solved: {stats['total_solved']}, Active days: {stats['active_days_30']}"
+    recent_goals = history_repo.list_recent(limit=5)
+
+    mgr = LearningPlanManager(get_client())
+    updated = mgr.evolve_plan_for_goal_shift(lp, goal_text, recent_goals, perf, weak)
+    plan_repo.update_plan_json(active["id"], updated.model_dump())
+    console.print("[green]✓[/green] Active plan refreshed using goal history + performance.")
+
+
 # Allow running as module
 if __name__ == "__main__":
     app()

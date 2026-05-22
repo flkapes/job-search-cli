@@ -61,6 +61,26 @@ class LearningPlanManager:
             pass
         return plan
 
+
+    def evolve_plan_for_goal_shift(
+        self,
+        plan: LearningPlan,
+        current_goal: str,
+        recent_goals: list[dict],
+        performance_summary: str,
+        weak_areas: list[str],
+    ) -> LearningPlan:
+        """Refresh a plan when goals drift, using goal history + performance context."""
+        prior_goals = [g.get("goal_text", "") for g in recent_goals[:5] if g.get("goal_text")]
+        drift_note = ""
+        if prior_goals:
+            drift_note = f"Current goal: {current_goal}. Prior goals: " + " | ".join(prior_goals)
+        else:
+            drift_note = f"Current goal: {current_goal}."
+
+        combined_summary = f"{performance_summary}\n{drift_note}".strip()
+        return self.evolve_plan(plan, combined_summary, weak_areas)
+
     def stream_daily_briefing(
         self, day: DayPlan, profile: UserProfile | None = None
     ) -> Generator[str, None, None]:

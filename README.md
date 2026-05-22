@@ -43,7 +43,7 @@ Paste a job description → AI generates practical coding problems focused on th
 Describe your goal in natural language:
 > *"Prepare me for a backend Python interview in 14 days"*
 
-The AI creates a structured day-by-day plan that **evolves over time** based on your performance, focusing more on weak areas and advancing past mastered topics.
+The AI creates a structured day-by-day plan that **evolves over time** based on your performance. You can also record goal changes and refresh your active plan from the CLI (`codepractice goal "..."`) or from the Learning Plan screen.
 
 ### 💬 AI Coach Chat
 Chat with your AI coding coach. It knows your profile, current plan, recent performance, and weak areas. Ask for explanations, code reviews, or motivation.
@@ -112,6 +112,9 @@ codepractice stats    # Quick stats (no TUI)
 codepractice config   # Re-run setup wizard
 codepractice check    # Test LLM connection
 codepractice export   # Export all data to JSON
+codepractice digest   # Daily digest with stats/review/plan snapshot
+codepractice prefetch # Warm local problem cache
+codepractice goal "..." # Save a goal update and optionally regenerate active plan
 ```
 
 ---
