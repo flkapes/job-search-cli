@@ -55,19 +55,30 @@ class ProblemRepository(BaseRepository):
         rows = self._execute(sql, tuple(params))
         return [self._parse_row(r) for r in rows if r]
 
-    def get_random(self, category: str | None = None, difficulty: str | None = None) -> dict | None:
-        if category and difficulty:
-            row = self._execute_one(
-                "SELECT * FROM problems WHERE category=? AND difficulty=? ORDER BY RANDOM() LIMIT 1",
-                (category, difficulty),
-            )
-        elif category:
-            row = self._execute_one(
-                "SELECT * FROM problems WHERE category=? ORDER BY RANDOM() LIMIT 1",
-                (category,),
-            )
-        else:
-            row = self._execute_one("SELECT * FROM problems ORDER BY RANDOM() LIMIT 1")
+    def get_random(
+        self,
+        category: str | None = None,
+        subcategory: str | None = None,
+        difficulty: str | None = None,
+    ) -> dict | None:
+        conditions: list[str] = []
+        params: list[str] = []
+
+        if category:
+            conditions.append("category = ?")
+            params.append(category)
+        if subcategory:
+            conditions.append("subcategory = ?")
+            params.append(subcategory)
+        if difficulty:
+            conditions.append("difficulty = ?")
+            params.append(difficulty)
+
+        where_clause = f" WHERE {' AND '.join(conditions)}" if conditions else ""
+        row = self._execute_one(
+            f"SELECT * FROM problems{where_clause} ORDER BY RANDOM() LIMIT 1",
+            tuple(params),
+        )
         return self._parse_row(row)
 
     def increment_shown(self, problem_id: int) -> None:
