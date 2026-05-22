@@ -2,6 +2,42 @@
 
 Features planned for future iterations, roughly ordered by impact.
 
+> **Source of truth:** This roadmap is aspirational and may include ideas not yet
+> released. For shipped capabilities, rely on `README.md` and in-app commands.
+
+---
+
+## Shipped (as of 2026-05-22)
+
+### ✅ Implemented — Offline Problem Cache
+- `codepractice prefetch --count N` warms and stores generated problems.
+- Optional `--category` and `--difficulty` filtering.
+
+### ✅ Implemented — Session Replay
+- Progress screen rows open a replay modal with submitted code and AI feedback.
+
+### ✅ Implemented — Personal Notes on Problems
+- Per-problem notes persisted and surfaced across practice/review.
+
+### ✅ Implemented — Weak-Area Auto-Drill
+- "Fix My Gaps" launches targeted drilling from weak category detection.
+
+### ✅ Implemented — Daily Digest Command
+- `codepractice digest` prints streak/stats/review queue and optional AI tip.
+
+### ✅ Implemented — Progress Markdown Export
+- `codepractice export --format md` creates a Markdown progress report.
+
+### ✅ Implemented — Suggested Approach Diff View
+- Feedback can display parsed `optimized_solution` guidance after evaluation.
+
+### ✅ Implemented — Personal Difficulty Rating
+- 1–5 user difficulty rating stored on attempts and used in mismatch analysis.
+
+### ✅ Implemented — Freeform Interview Questions + Drafts
+- JD/Resume flows can generate non-coding interview questions.
+- Draft answers persist via `question_drafts`.
+
 ---
 
 ## Near-Term
