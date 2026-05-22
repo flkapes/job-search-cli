@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import time
+from datetime import datetime, timedelta
 from enum import Enum
 
 from textual.app import ComposeResult
@@ -94,14 +95,23 @@ class PracticeContent(Widget):
     _init_session_type: str = "free"
     _drill_category: str | None = None
     _drill_subcategory: str | None = None
+    _simulation_mode: bool = False
+    _simulation_duration_sec: int = 0
+    _simulation_deadline: datetime | None = None
+    _simulation_locked: bool = False
+    _peek_attempts: int = 0
 
-    def __init__(self, review_mode: bool = False, **kwargs):
+    def __init__(self, review_mode: bool = False, simulation_mode: bool = False, simulation_duration_sec: int = 1800, **kwargs):
         super().__init__(**kwargs)
         self._review_mode = review_mode
+        self._simulation_mode = simulation_mode
+        self._simulation_duration_sec = simulation_duration_sec if simulation_mode else 0
+        if simulation_mode:
+            self._init_session_type = "interview_simulation"
 
     def compose(self) -> ComposeResult:
         with Horizontal(id="practice-top-bar"):
-            yield Label("⚡ [bold]Free Practice[/bold]", id="practice-title")
+            yield Label("🧪 [bold]Interview Simulation[/bold]" if self._simulation_mode else "⚡ [bold]Free Practice[/bold]", id="practice-title")
             yield Label("", id="timer-label")
 
         # Phase: Loading
@@ -114,6 +124,7 @@ class PracticeContent(Widget):
                 yield Button("Start Coding [Enter]", id="btn-start-coding", classes="primary-btn")
                 yield Button("Skip [N]", id="btn-skip", classes="secondary-btn")
                 yield Button("Hint [H]", id="btn-hint", classes="secondary-btn")
+                yield Button("Finish Simulation", id="btn-finish-sim", classes="secondary-btn")
 
         # Phase: Coding (split pane)
         with Horizontal(id="phase-coding"):
@@ -145,6 +156,7 @@ class PracticeContent(Widget):
         self._show_phase("loading")
         # Start a session and load first problem
         self.call_later(self._init_session)
+        self.set_interval(1.0, self._tick_timer)
 
     def _show_phase(self, phase: str) -> None:
         for pid in ("phase-loading", "phase-problem", "phase-coding", "phase-feedback"):
@@ -167,7 +179,11 @@ class PracticeContent(Widget):
     def _init_session(self) -> None:
         try:
             session_type = getattr(self, "_init_session_type", "free")
-            self._session_id = self.app.session_repo.start_session(session_type)
+            metadata = {}
+            if self._simulation_mode:
+                self._simulation_deadline = datetime.now() + timedelta(seconds=self._simulation_duration_sec)
+                metadata = {"duration_sec": self._simulation_duration_sec, "simulation_mode": True}
+            self._session_id = self.app.session_repo.start_session(session_type, metadata=metadata)
         except Exception:
             self._session_id = None
         cat = getattr(self, "_drill_category", None)
@@ -235,6 +251,10 @@ class PracticeContent(Widget):
             return
         self.query_one("#problem-display", ProblemCard).load_problem(self._problem)
         self.query_one("#problem-mini", ProblemCard).load_problem(self._problem)
+        hint_btn = self.query_one("#btn-hint", Button)
+        finish_btn = self.query_one("#btn-finish-sim", Button)
+        hint_btn.disabled = self._simulation_mode
+        finish_btn.display = self._simulation_mode
         self._show_phase("problem")
 
     # ── Actions ────────────────────────────────────────────────────────────────
@@ -247,6 +267,8 @@ class PracticeContent(Widget):
             self.action_next_problem()
         elif btn == "btn-hint":
             self.action_show_hint()
+        elif btn == "btn-finish-sim":
+            self._finish_simulation()
         elif btn == "btn-submit":
             self.action_submit_code()
         elif btn == "btn-back-problem":
@@ -351,6 +373,9 @@ class PracticeContent(Widget):
             stream.show_error(f"Evaluation failed: {e}")
 
     def action_show_hint(self) -> None:
+        if self._simulation_mode:
+            self._peek_attempts += 1
+            return
         if self.current_phase == "problem":
             card = self.query_one("#problem-display", ProblemCard)
         elif self.current_phase == "coding":
@@ -362,6 +387,8 @@ class PracticeContent(Widget):
             self._hints_used += 1
 
     def action_next_problem(self) -> None:
+        if self._simulation_locked:
+            return
         self._load_next_problem()
 
     def action_back_to_problem(self) -> None:
@@ -369,6 +396,63 @@ class PracticeContent(Widget):
             self._show_phase("problem")
 
     def action_submit_code(self) -> None:
-        if self.current_phase != "coding":
+        if self.current_phase != "coding" or self._simulation_locked:
             return
         self._submit_code()
+
+    def _timer_state(self) -> tuple[str, str]:
+        if not self._simulation_mode or not self._simulation_deadline:
+            return "", "white"
+        remaining = int((self._simulation_deadline - datetime.now()).total_seconds())
+        if remaining <= 0:
+            return "00:00", "red"
+        mm, ss = divmod(remaining, 60)
+        if remaining <= 300:
+            color = "red"
+        elif remaining <= 900:
+            color = "yellow"
+        else:
+            color = "green"
+        return f"{mm:02d}:{ss:02d}", color
+
+    def _tick_timer(self) -> None:
+        if not self._simulation_mode:
+            return
+        text, color = self._timer_state()
+        self.query_one("#timer-label", Label).update(f"[{color}]⏱ {text}[/{color}]")
+        if text == "00:00" and not self._simulation_locked:
+            self._finish_simulation()
+
+    def _finish_simulation(self) -> None:
+        if not self._simulation_mode or self._simulation_locked:
+            return
+        self._simulation_locked = True
+        if self._session_id:
+            card = self.app.session_repo.get_scorecard(self._session_id)
+            attempted = int(card.get("attempted", 0))
+            solved = int(card.get("solved", 0))
+            self.app.session_repo.end_session(
+                self._session_id,
+                total=attempted,
+                solved=solved,
+                notes=f"peek_attempts={self._peek_attempts}",
+            )
+            self._show_scorecard(card)
+
+    def _show_scorecard(self, card: dict) -> None:
+        avg_pct = int(float(card.get("avg_score", 0.0)) * 100)
+        verdict = "PASS" if avg_pct >= 70 else "FAIL"
+        lines = [
+            "[bold]Interview Simulation Complete[/bold]",
+            f"Attempted: {card.get('attempted', 0)}",
+            f"Solved: {card.get('solved', 0)}",
+            f"Average score: {avg_pct}%",
+            f"Verdict: [bold]{verdict}[/bold]",
+            "Category breakdown:",
+        ]
+        for row in card.get("category_breakdown", []):
+            lines.append(
+                f"- {row.get('category')}: {row.get('solved')}/{row.get('attempted')} ({int(float(row.get('avg_score', 0))*100)}%)"
+            )
+        self.query_one("#feedback-stream", StreamingOutput).update("\n".join(lines))
+        self._show_phase("feedback")

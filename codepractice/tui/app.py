@@ -133,6 +133,9 @@ class CodePracticeApp(App):
         elif name == "practice":
             from codepractice.tui.screens.practice import PracticeContent
             return PracticeContent()
+        elif name == "interview_simulation":
+            from codepractice.tui.screens.practice import PracticeContent
+            return PracticeContent(simulation_mode=True)
         elif name == "review":
             from codepractice.tui.screens.practice import PracticeContent
             return PracticeContent(review_mode=True)
