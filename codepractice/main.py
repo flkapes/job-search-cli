@@ -94,7 +94,12 @@ def check():
             console.print(f"Available models: {', '.join(models[:10])}")
     else:
         console.print("[red]✗ Cannot connect to LLM backend[/red]")
-        console.print("Make sure Ollama or LM Studio is running.")
+        from codepractice.config import LLM_BACKEND
+        if LLM_BACKEND in ("anthropic", "openai"):
+            key_var = "ANTHROPIC_API_KEY" if LLM_BACKEND == "anthropic" else "OPENAI_API_KEY"
+            console.print(f"Check that {key_var} is set and valid in your .env.")
+        else:
+            console.print("Make sure Ollama or LM Studio is running.")
 
 
 @app.command()
@@ -298,14 +303,48 @@ def _run_setup_wizard(force: bool = False) -> None:
 
     backend = questionary.select(
         "LLM Backend?",
-        choices=["ollama", "lmstudio"],
+        choices=[
+            questionary.Choice("ollama (local)", value="ollama"),
+            questionary.Choice("lmstudio (local)", value="lmstudio"),
+            questionary.Choice("anthropic (cloud API)", value="anthropic"),
+            questionary.Choice("openai-compatible (cloud API)", value="openai"),
+        ],
         default="ollama",
     ).ask()
 
     model = "llama3"
     base_url = ""
 
-    if backend == "ollama":
+    if backend == "anthropic":
+        from codepractice.config import ANTHROPIC_API_KEY, ANTHROPIC_MODEL
+        model = questionary.text("Model?", default=ANTHROPIC_MODEL).ask() or ANTHROPIC_MODEL
+        if ANTHROPIC_API_KEY:
+            console.print("  [green]✓[/green] ANTHROPIC_API_KEY found in environment.")
+        else:
+            console.print(
+                "  [yellow]⚠[/yellow] Set [bold]ANTHROPIC_API_KEY[/bold] in your .env — "
+                "the key is read from the environment and never stored in the database."
+            )
+        console.print(
+            "  [dim]Note: cloud backends send prompts to an external API — "
+            "local backends keep everything on your machine.[/dim]"
+        )
+    elif backend == "openai":
+        from codepractice.config import OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL
+        base_url = questionary.text("API base URL?", default=OPENAI_BASE_URL).ask() or OPENAI_BASE_URL
+        model = questionary.text("Model?", default=OPENAI_MODEL).ask() or OPENAI_MODEL
+        if OPENAI_API_KEY:
+            console.print("  [green]✓[/green] OPENAI_API_KEY found in environment.")
+        else:
+            console.print(
+                "  [yellow]⚠[/yellow] Set [bold]OPENAI_API_KEY[/bold] in your .env — "
+                "the key is read from the environment and never stored in the database."
+            )
+        console.print(
+            "  [dim]Note: cloud backends send prompts to an external API — "
+            "local backends keep everything on your machine.[/dim]"
+        )
+    elif backend == "ollama":
         base_url = questionary.text(
             "Ollama URL?", default="http://localhost:11434"
         ).ask() or "http://localhost:11434"

@@ -55,6 +55,8 @@ class ExperienceLevel(str, Enum):
 class LLMBackend(str, Enum):
     ollama = "ollama"
     lmstudio = "lmstudio"
+    anthropic = "anthropic"
+    openai = "openai"
 
 
 # ── Problem Models ─────────────────────────────────────────────────────────────

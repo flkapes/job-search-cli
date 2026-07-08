@@ -1,4 +1,4 @@
-"""Unified LLM client: Ollama + LM Studio backends with streaming support."""
+"""Unified LLM client: Ollama, LM Studio, Anthropic, and OpenAI-compatible backends."""
 
 from __future__ import annotations
 
@@ -10,6 +10,8 @@ from typing import Generator
 import httpx
 
 from codepractice.config import (
+    ANTHROPIC_API_KEY,
+    ANTHROPIC_MODEL,
     DEBUG,
     LLM_MAX_RETRIES,
     LLM_TIMEOUT,
@@ -17,6 +19,9 @@ from codepractice.config import (
     LMSTUDIO_MODEL,
     OLLAMA_BASE_URL,
     OLLAMA_MODEL,
+    OPENAI_API_KEY,
+    OPENAI_BASE_URL,
+    OPENAI_MODEL,
 )
 
 
@@ -119,10 +124,16 @@ class OllamaClient(LLMClient):
 class LMStudioClient(LLMClient):
     """LM Studio backend — OpenAI-compatible API."""
 
-    def __init__(self, model: str = LMSTUDIO_MODEL, base_url: str = LMSTUDIO_BASE_URL) -> None:
+    def __init__(
+        self,
+        model: str = LMSTUDIO_MODEL,
+        base_url: str = LMSTUDIO_BASE_URL,
+        api_key: str = "",
+    ) -> None:
         self.model = model
         self.base_url = base_url.rstrip("/")
-        self._client = httpx.Client(timeout=LLM_TIMEOUT)
+        headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+        self._client = httpx.Client(timeout=LLM_TIMEOUT, headers=headers)
 
     def health_check(self) -> bool:
         try:
@@ -192,6 +203,99 @@ class LMStudioClient(LLMClient):
             raise LLMError(f"LM Studio stream failed: {e}") from e
 
 
+class OpenAICompatClient(LMStudioClient):
+    """OpenAI (or any OpenAI-compatible cloud endpoint) — API key from the environment."""
+
+    def __init__(
+        self,
+        model: str = OPENAI_MODEL,
+        base_url: str = OPENAI_BASE_URL,
+        api_key: str = "",
+    ) -> None:
+        super().__init__(
+            model=model,
+            base_url=base_url,
+            api_key=api_key or OPENAI_API_KEY,
+        )
+
+
+class AnthropicClient(LLMClient):
+    """Anthropic API backend via the official SDK. Reads ANTHROPIC_API_KEY from .env."""
+
+    def __init__(self, model: str = ANTHROPIC_MODEL, api_key: str = "") -> None:
+        self.model = model
+        self._api_key = api_key or ANTHROPIC_API_KEY
+        self._sdk_client = None
+
+    @property
+    def _client(self):
+        if self._sdk_client is None:
+            try:
+                import anthropic
+            except ImportError as e:
+                raise LLMError(
+                    "The 'anthropic' package is required for the anthropic backend "
+                    "(pip install anthropic)"
+                ) from e
+            self._sdk_client = anthropic.Anthropic(
+                api_key=self._api_key or None, timeout=LLM_TIMEOUT
+            )
+        return self._sdk_client
+
+    @staticmethod
+    def split_system(messages: list[dict]) -> tuple[str, list[dict]]:
+        """Anthropic takes the system prompt as a separate parameter."""
+        system_parts = [m["content"] for m in messages if m.get("role") == "system"]
+        rest = [m for m in messages if m.get("role") != "system"]
+        return "\n\n".join(system_parts), rest
+
+    def health_check(self) -> bool:
+        if not self._api_key:
+            return False
+        try:
+            self._client.models.retrieve(self.model)
+            return True
+        except Exception:
+            return False
+
+    def list_models(self) -> list[str]:
+        try:
+            return [m.id for m in self._client.models.list()]
+        except Exception:
+            return []
+
+    def chat_sync(self, messages: list[dict], **kwargs) -> str:
+        system, rest = self.split_system(messages)
+        try:
+            # Current Claude models reject sampling params — steer via prompts only.
+            response = self._client.messages.create(
+                model=self.model,
+                max_tokens=kwargs.get("max_tokens", 4096),
+                system=system or None,
+                messages=rest,
+            )
+            return next((b.text for b in response.content if b.type == "text"), "")
+        except LLMError:
+            raise
+        except Exception as e:
+            raise LLMError(f"Anthropic request failed: {e}") from e
+
+    def stream_chat(self, messages: list[dict], **kwargs) -> Generator[str, None, None]:
+        system, rest = self.split_system(messages)
+        try:
+            with self._client.messages.stream(
+                model=self.model,
+                max_tokens=kwargs.get("max_tokens", 4096),
+                system=system or None,
+                messages=rest,
+            ) as stream:
+                yield from stream.text_stream
+        except LLMError:
+            raise
+        except Exception as e:
+            raise LLMError(f"Anthropic stream failed: {e}") from e
+
+
 class LLMError(Exception):
     """Raised when LLM backend is unreachable or returns an error."""
 
@@ -206,6 +310,13 @@ def get_client(backend: str | None = None, model: str | None = None, base_url: s
         return LMStudioClient(
             model=model or LMSTUDIO_MODEL,
             base_url=base_url or LMSTUDIO_BASE_URL,
+        )
+    if backend == "anthropic":
+        return AnthropicClient(model=model or ANTHROPIC_MODEL)
+    if backend == "openai":
+        return OpenAICompatClient(
+            model=model or OPENAI_MODEL,
+            base_url=base_url or OPENAI_BASE_URL,
         )
     return OllamaClient(
         model=model or OLLAMA_MODEL,
