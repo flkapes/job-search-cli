@@ -100,6 +100,7 @@ class PracticeContent(Widget):
     _simulation_deadline: datetime | None = None
     _simulation_locked: bool = False
     _peek_attempts: int = 0
+    _language: str = "python"
 
     def __init__(self, review_mode: bool = False, simulation_mode: bool = False, simulation_duration_sec: int = 1800, **kwargs):
         super().__init__(**kwargs)
@@ -139,6 +140,7 @@ class PracticeContent(Widget):
         # Phase: Feedback
         with Vertical(id="phase-feedback"):
             yield Label("[bold]Evaluation[/bold]", classes="panel-title")
+            yield Static("", id="test-results-panel")
             yield StreamingOutput(id="feedback-stream")
             yield Static("", id="diff-panel")
             with Horizontal(id="rating-bar"):
@@ -166,6 +168,7 @@ class PracticeContent(Widget):
         if phase == "feedback":
             try:
                 self.query_one("#diff-panel", Static).update("")
+                self.query_one("#test-results-panel", Static).update("")
                 self.query_one("#rating-bar").display = True
             except Exception:
                 pass
@@ -322,8 +325,19 @@ class PracticeContent(Widget):
         try:
             from codepractice.llm.services.answer_evaluator import AnswerEvaluatorService
             evaluator = AnswerEvaluatorService(self.app.llm)
+
+            # Deterministic verification first — authoritative for correctness
+            verification = None
+            try:
+                verification = evaluator.verify(self._problem, code, language=self._language)
+                self._show_test_results(verification)
+            except Exception:
+                pass
+
             full_text = stream.stream_sync(
-                evaluator.stream_evaluation(self._problem, code)
+                evaluator.stream_evaluation(
+                    self._problem, code, verification=verification, language=self._language
+                )
             )
 
             # Parse score from response and record attempt
@@ -331,6 +345,13 @@ class PracticeContent(Widget):
             score_data = extract_json(full_text.split("\n")[-1]) if full_text else None
             score = float(score_data.get("score", 0.5)) if isinstance(score_data, dict) else 0.5
             passed = bool(score_data.get("passed", score >= 0.7)) if isinstance(score_data, dict) else score >= 0.7
+
+            # Guardrails: the LLM can't pass code that fails its test cases
+            try:
+                from codepractice.utils.code_runner import clamp_score
+                score, passed = clamp_score(score, passed, verification)
+            except Exception:
+                pass
 
             if self._session_id and self._problem and self._problem.id:
                 self._last_attempt_id = self.app.session_repo.record_attempt({
@@ -371,6 +392,32 @@ class PracticeContent(Widget):
 
         except Exception as e:
             stream.show_error(f"Evaluation failed: {e}")
+
+    def _show_test_results(self, verification) -> None:
+        """Render the per-test-case verification table in the feedback phase."""
+        panel = self.query_one("#test-results-panel", Static)
+        if verification is None or verification.total == 0:
+            panel.update("")
+            return
+        lines = ["[bold]Test Cases[/bold]"]
+        for i, r in enumerate(verification.results, 1):
+            if not r.comparable:
+                lines.append(f"  [dim]○ Case {i}: not verifiable via stdout[/dim]")
+            elif r.passed:
+                lines.append(f"  [#3fb950]✓ Case {i}: passed[/#3fb950] [dim]({r.runtime_ms:.0f}ms)[/dim]")
+            elif r.error:
+                lines.append(f"  [#f85149]✗ Case {i}: {r.error}[/#f85149]")
+            else:
+                lines.append(
+                    f"  [#f85149]✗ Case {i}: expected [bold]{r.expected[:60]}[/bold], "
+                    f"got [bold]{r.actual[:60] or '(nothing)'}[/bold][/#f85149]"
+                )
+        if verification.comparable:
+            color = "#3fb950" if verification.all_passed else "#f85149"
+            lines.append(
+                f"  [{color}]{verification.passed}/{verification.comparable} verified cases passed[/{color}]"
+            )
+        panel.update("\n".join(lines))
 
     def action_show_hint(self) -> None:
         if self._simulation_mode:
