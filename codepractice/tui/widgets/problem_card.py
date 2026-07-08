@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from textual.app import ComposeResult
-from textual.containers import Vertical, VerticalScroll
+from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.widget import Widget
-from textual.widgets import Label, Markdown, Static, TextArea
+from textual.widgets import Button, Label, Markdown, Static, TextArea
 
 from codepractice.core.models import Problem
 from codepractice.utils.text_utils import difficulty_badge
@@ -58,6 +58,18 @@ class ProblemCard(Widget):
         color: #d29922;
         margin: 0 0 0 2;
     }
+
+    ProblemCard #title-row {
+        height: auto;
+    }
+
+    ProblemCard #btn-bookmark {
+        dock: right;
+        min-width: 5;
+        background: transparent;
+        border: none;
+        color: #d29922;
+    }
     """
 
     _problem: Problem | None = None
@@ -65,7 +77,9 @@ class ProblemCard(Widget):
 
     def compose(self) -> ComposeResult:
         with Vertical(id="problem-header"):
-            yield Label("No problem loaded", classes="problem-title-text", id="p-title")
+            with Horizontal(id="title-row"):
+                yield Label("No problem loaded", classes="problem-title-text", id="p-title")
+                yield Button("☆", id="btn-bookmark")
             yield Label("", classes="problem-meta", id="p-meta")
         with VerticalScroll(id="problem-body"):
             yield Markdown("", id="p-description")
@@ -116,6 +130,43 @@ class ProblemCard(Widget):
         except Exception:
             pass
 
+        self._refresh_bookmark_button()
+
+    def _refresh_bookmark_button(self) -> None:
+        try:
+            btn = self.query_one("#btn-bookmark", Button)
+            if self._problem and self._problem.id:
+                bookmarked = self.app.problem_repo.is_bookmarked(self._problem.id)
+                btn.label = "★" if bookmarked else "☆"
+                btn.disabled = False
+            else:
+                btn.label = "☆"
+                btn.disabled = True
+        except Exception:
+            pass
+
+    def toggle_bookmark(self) -> bool | None:
+        """Flip the bookmark state. Returns the new state, or None if unavailable."""
+        if not self._problem or not self._problem.id:
+            return None
+        try:
+            new_state = not self.app.problem_repo.is_bookmarked(self._problem.id)
+            self.app.problem_repo.set_bookmark(self._problem.id, new_state)
+            self._refresh_bookmark_button()
+            return new_state
+        except Exception:
+            return None
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "btn-bookmark":
+            event.stop()
+            state = self.toggle_bookmark()
+            if state is not None:
+                self.app.notify(
+                    "Bookmarked — find it in My Library" if state else "Bookmark removed",
+                    timeout=3,
+                )
+
     def show_next_hint(self) -> str | None:
         """Reveal the next hint. Returns the hint text or None if all shown."""
         if not self._problem or not self._problem.hints:
@@ -157,3 +208,4 @@ class ProblemCard(Widget):
             self.query_one("#p-notes", TextArea).load_text("")
         except Exception:
             pass
+        self._refresh_bookmark_button()

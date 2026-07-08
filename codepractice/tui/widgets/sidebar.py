@@ -80,6 +80,7 @@ class SidebarNav(Widget):
         ]),
         ("tools", [
             ("chat", "💬 AI Coach"),
+            ("library", "📚 My Library"),
             ("progress", "📊 Progress"),
             ("profile", "👤 Profile"),
         ]),

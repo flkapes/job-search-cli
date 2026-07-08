@@ -217,6 +217,18 @@ class SessionRepository(BaseRepository):
             )
         )
 
+    def get_best_attempt_for_problem(self, problem_id: int) -> dict | None:
+        """The user's best attempt (highest score, then most recent) for a problem."""
+        return self.row_to_dict(
+            self._execute_one(
+                """SELECT * FROM problem_attempts
+                   WHERE problem_id = ? AND user_code != ''
+                   ORDER BY ai_score DESC, attempted_at DESC
+                   LIMIT 1""",
+                (problem_id,),
+            )
+        )
+
     def get_daily_activity(self, days: int = 30) -> list[dict]:
         return self.rows_to_dicts(
             self._execute(

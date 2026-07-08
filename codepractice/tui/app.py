@@ -159,6 +159,9 @@ class CodePracticeApp(App):
         elif name == "chat":
             from codepractice.tui.screens.chat import ChatContent
             return ChatContent()
+        elif name == "library":
+            from codepractice.tui.screens.library import LibraryContent
+            return LibraryContent()
         elif name == "progress":
             from codepractice.tui.screens.progress import ProgressContent
             return ProgressContent()

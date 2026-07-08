@@ -81,6 +81,7 @@ class PracticeContent(Widget):
     BINDINGS = [
         Binding("h", "show_hint", "Hint", show=True),
         Binding("n", "next_problem", "Next", show=True),
+        Binding("b", "toggle_bookmark", "Bookmark", show=True),
         Binding("ctrl+enter", "submit_code", "Submit", show=False),
         Binding("escape", "back_to_problem", "Back", show=False),
     ]
@@ -464,6 +465,19 @@ class PracticeContent(Widget):
         hint = card.show_next_hint()
         if hint:
             self._hints_used += 1
+
+    def action_toggle_bookmark(self) -> None:
+        try:
+            card = self.query_one("#problem-display", ProblemCard)
+            state = card.toggle_bookmark()
+            if state is not None:
+                self.query_one("#problem-mini", ProblemCard)._refresh_bookmark_button()
+                self.notify(
+                    "Bookmarked — find it in My Library" if state else "Bookmark removed",
+                    timeout=3,
+                )
+        except Exception:
+            pass
 
     def action_next_problem(self) -> None:
         if self._simulation_locked:
