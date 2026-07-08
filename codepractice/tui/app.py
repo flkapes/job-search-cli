@@ -11,6 +11,7 @@ from textual.containers import Container, Horizontal
 from codepractice.db.database import get_db
 from codepractice.db.repositories import (
     ChatHistoryRepository,
+    GamificationRepository,
     GoalHistoryRepository,
     LearningPlanRepository,
     ProblemRepository,
@@ -55,6 +56,7 @@ class CodePracticeApp(App):
         self.plan_repo = LearningPlanRepository(self.db)
         self.chat_repo = ChatHistoryRepository(self.db)
         self.goal_history_repo = GoalHistoryRepository(self.db)
+        self.gamification_repo = GamificationRepository(self.db)
         self._llm: LLMClient | None = None
         self._llm_online = False
 

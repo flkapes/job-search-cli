@@ -372,6 +372,7 @@ class PracticeContent(Widget):
                     update_schedule(self.app.db, self._problem.id, score)
                 except Exception:
                     pass
+                self._award_rewards(score, passed, elapsed)
 
             # Show optimized solution diff if score < 0.9
             try:
@@ -392,6 +393,37 @@ class PracticeContent(Widget):
 
         except Exception as e:
             stream.show_error(f"Evaluation failed: {e}")
+
+    def _award_rewards(self, score: float, passed: bool, elapsed: int) -> None:
+        """Award XP and surface achievement unlock toasts for the last attempt."""
+        try:
+            from codepractice.core.gamification import award_attempt, level_for_xp
+            xp, new_achievements = award_attempt(
+                self.app.gamification_repo,
+                self.app.session_repo,
+                self._problem,
+                self._last_attempt_id,
+                score,
+                passed,
+                time_spent_sec=elapsed,
+                hints_used=self._hints_used,
+            )
+            if xp:
+                info = level_for_xp(self.app.gamification_repo.total_xp())
+                self.notify(
+                    f"+{xp} XP  —  Level {info.level}: {info.title}",
+                    title="XP earned",
+                    timeout=4,
+                )
+            for a in new_achievements:
+                self.notify(
+                    f"{a.icon} {a.name} — {a.description}",
+                    title="Achievement unlocked!",
+                    severity="information",
+                    timeout=8,
+                )
+        except Exception:
+            pass
 
     def _show_test_results(self, verification) -> None:
         """Render the per-test-case verification table in the feedback phase."""
