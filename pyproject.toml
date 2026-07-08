@@ -55,7 +55,7 @@ include = ["codepractice*"]
 
 [tool.setuptools.package-data]
 codepractice = ["tui/*.tcss", "tui/**/*.tcss"]
-"*" = ["data/problems/*.json"]
+"*" = ["data/problems/*.json", "data/companies.json"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

@@ -225,9 +225,25 @@ class JobDescContent(Widget):
                 from codepractice.core.models import UserProfile
                 profile = UserProfile.from_db(profile_data)
 
+            # Enrich with company interview intelligence when the company is known
+            enriched_jd = jd_text
+            try:
+                from codepractice.core.company_profiles import (
+                    company_intelligence_note,
+                    find_company_by_name,
+                )
+                known = find_company_by_name(company)
+                if known:
+                    enriched_jd = f"{jd_text}\n\n{company_intelligence_note(known)}"
+                    stream.write_line(
+                        f"[#58a6ff]Using {known['name']} interview profile to target problems.[/#58a6ff]"
+                    )
+            except Exception:
+                pass
+
             from codepractice.llm.services.problem_generator import ProblemGeneratorService
             gen = ProblemGeneratorService(self.app.llm)
-            problems = gen.generate_from_jd(jd_text, count, profile)
+            problems = gen.generate_from_jd(enriched_jd, count, profile)
 
             if problems:
                 stream.write_line(f"\n[green]✓ Generated {len(problems)} targeted problems![/green]\n")

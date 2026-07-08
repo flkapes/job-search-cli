@@ -21,6 +21,7 @@ EXPORTS_DIR.mkdir(exist_ok=True)
 # Static problem data bundled with the package
 _PACKAGE_DIR = Path(__file__).parent.parent
 PROBLEMS_DATA_DIR = _PACKAGE_DIR / "data" / "problems"
+COMPANIES_DATA_FILE = _PACKAGE_DIR / "data" / "companies.json"
 
 # ── LLM Configuration ──────────────────────────────────────────────────────────
 

@@ -153,6 +153,9 @@ class CodePracticeApp(App):
         elif name == "job_desc":
             from codepractice.tui.screens.job_desc import JobDescContent
             return JobDescContent()
+        elif name == "companies":
+            from codepractice.tui.screens.companies import CompaniesContent
+            return CompaniesContent()
         elif name == "learning_plan":
             from codepractice.tui.screens.learning_plan import LearningPlanContent
             return LearningPlanContent()

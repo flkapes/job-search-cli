@@ -76,6 +76,7 @@ class SidebarNav(Widget):
         ("prepare", [
             ("resume_drill", "📄 Resume Drill"),
             ("job_desc", "💼 Job Description"),
+            ("companies", "🏢 Companies"),
             ("learning_plan", "📅 Learning Plan"),
         ]),
         ("tools", [
