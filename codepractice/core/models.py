@@ -28,6 +28,7 @@ class ProblemSource(str, Enum):
     ai_generated = "ai_generated"
     jd_driven = "jd_driven"
     resume_driven = "resume_driven"
+    custom = "custom"
 
 
 class SessionType(str, Enum):

@@ -101,6 +101,12 @@ class ProblemRepository(BaseRepository):
             count += 1
         return count
 
+    def get_by_source(self, source: str) -> list[dict]:
+        rows = self._execute(
+            "SELECT * FROM problems WHERE source = ? ORDER BY created_at DESC", (source,)
+        )
+        return [self._parse_row(r) for r in rows if r]
+
     def set_bookmark(self, problem_id: int, bookmarked: bool) -> None:
         """Bookmark or un-bookmark a problem."""
         if bookmarked:

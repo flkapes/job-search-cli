@@ -73,6 +73,50 @@ def export(
         console.print(f"[green]✓[/green] Data exported to: [bold]{path}[/bold]")
 
 
+@app.command("export-problems")
+def export_problems(
+    path: str = typer.Argument("custom_problems.json", help="Destination JSON file"),
+):
+    """Export your custom problems to a shareable JSON file."""
+    from pathlib import Path
+
+    from codepractice.core.custom_problems import export_custom_problems
+    from codepractice.db import get_db
+    from codepractice.db.repositories import ProblemRepository
+
+    repo = ProblemRepository(get_db())
+    count = export_custom_problems(repo, Path(path))
+    if count:
+        console.print(f"[green]✓[/green] Exported {count} custom problem{'s' if count != 1 else ''} to [bold]{path}[/bold]")
+    else:
+        console.print("[yellow]⚠[/yellow] No custom problems to export. Create some via the New Problem screen.")
+
+
+@app.command("import-problems")
+def import_problems(
+    path: str = typer.Argument(..., help="JSON file produced by export-problems"),
+):
+    """Import shared custom problems from a JSON file."""
+    from pathlib import Path
+
+    from codepractice.core.custom_problems import import_custom_problems
+    from codepractice.db import get_db
+    from codepractice.db.repositories import ProblemRepository
+
+    file_path = Path(path)
+    if not file_path.exists():
+        console.print(f"[red]✗[/red] File not found: {path}")
+        raise typer.Exit(1)
+
+    repo = ProblemRepository(get_db())
+    try:
+        count = import_custom_problems(repo, file_path)
+    except (ValueError, Exception) as e:
+        console.print(f"[red]✗[/red] Import failed: {e}")
+        raise typer.Exit(1) from e
+    console.print(f"[green]✓[/green] Imported {count} problem{'s' if count != 1 else ''} (duplicates and invalid entries skipped).")
+
+
 @app.command()
 def config():
     """Configure LLM backend and profile."""

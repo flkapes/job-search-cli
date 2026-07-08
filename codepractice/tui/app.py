@@ -165,6 +165,9 @@ class CodePracticeApp(App):
         elif name == "library":
             from codepractice.tui.screens.library import LibraryContent
             return LibraryContent()
+        elif name == "create_problem":
+            from codepractice.tui.screens.create_problem import CreateProblemContent
+            return CreateProblemContent()
         elif name == "progress":
             from codepractice.tui.screens.progress import ProgressContent
             return ProgressContent()
