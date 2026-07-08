@@ -7,7 +7,7 @@ Features planned for future iterations, roughly ordered by impact.
 
 ---
 
-## Shipped (as of 2026-05-22)
+## Shipped (as of 2026-07-08)
 
 ### ✅ Implemented — Offline Problem Cache
 - `codepractice prefetch --count N` warms and stores generated problems.
@@ -38,18 +38,48 @@ Features planned for future iterations, roughly ordered by impact.
 - JD/Resume flows can generate non-coding interview questions.
 - Draft answers persist via `question_drafts`.
 
+### ✅ Implemented — Interview Simulation Mode
+- Timed, no-hints sessions from the Dashboard with countdown timer,
+  peek-penalty tracking, early finish, and end-of-session scorecard.
+- Stored with `session_type = "interview_simulation"` for clean analytics.
+
+### ✅ Implemented — Goal Evolution Tracking
+- `goal_history` table, `codepractice goal "..."` CLI command,
+  "Update Goal" action on the Learning Plan screen, and a goal-drift
+  panel on the Progress screen.
+
 ---
 
-## Near-Term
+## Near-Term — Foundation & Quality
 
-### Interview Simulation Mode
-A timed, no-hints practice mode that mirrors real interview conditions.
-- Configurable session length (20 / 45 / 90 min)
-- Countdown timer widget in the header (green → yellow → red)
-- Hint button disabled; peeking at hints counts against score
-- Problems drawn from job description or company profile
-- Final scorecard with pass/fail verdict and category breakdown
-- Stored separately from regular practice sessions for clean analytics
+Correctness and reach improvements that de-risk everything below them.
+
+### Deterministic Test-Case Verification
+The evaluation loop today relies on the LLM to judge correctness; the code
+runner executes submissions but never asserts actual output against
+`expected_output`, and when the LLM is offline every submission scores 0.5.
+- Compare captured stdout / return values against `expected_output` per test case
+- Report per-case pass/fail alongside the LLM's qualitative feedback
+- Use deterministic results as the score floor/ceiling (an LLM can't "pass"
+  code that fails its test cases)
+- Prerequisite for fair XP/achievements and trustworthy simulation scorecards
+
+### Cloud LLM Backend Option (Anthropic / OpenAI-compatible)
+The `LLMClient` abstraction already supports pluggable backends; adding an
+API-key backend dramatically widens the audience beyond local-LLM users.
+- `LLM_BACKEND=anthropic` (or any OpenAI-compatible endpoint) via `.env`
+- Local-first remains the default; document the privacy trade-off clearly
+- Better structured-output reliability improves every feature downstream
+
+### Code-Runner Sandbox Hardening
+Current execution is a plain subprocess with the user's interpreter — fine
+for self-authored code, insufficient once custom/shared problems exist.
+- Resource limits (memory, CPU, process count), no-network execution
+- Restricted filesystem visibility for the child process
+
+---
+
+## Near-Term — Features
 
 ### Gamification — XP & Achievements
 Keeps motivation high across long preparation streaks.
@@ -62,13 +92,14 @@ Keeps motivation high across long preparation streaks.
 - Achievement gallery on the Progress screen
 - XP history chart on the Progress screen
 
-### Goal Evolution Tracking
-Makes the learning plan truly adaptive over time.
-- `goal_history` DB table: timestamped NL goal statements + plan summaries
-- `codepractice goal "I want to focus more on system design now"` CLI command
-- "Update Goal" button on the Learning Plan screen
-- LLM reads full goal history to evolve the plan, explaining what changed
-- Week-over-week goal drift summary in the Progress screen
+### Problem Bookmarking & Solution Library
+Save and revisit favourite problems and solutions. (Promoted from
+Longer-Term: cheap to build on existing notes/replay infrastructure,
+high daily utility.)
+- Bookmark button on every problem card
+- "My Library" screen with bookmarked problems and user solutions
+- Filter by tag, difficulty, category
+- Compare user solution vs AI-optimal solution side-by-side
 
 ---
 
@@ -93,11 +124,61 @@ Connects the app to live job market data.
 - **Resume import**: `get_resume` MCP tool pulls structured resume data into the
   Resume Drill screen, replacing manual paste
 
+### Custom Problem Creation
+Let users define their own drill problems. (Promoted from Longer-Term:
+unlocks sharing and personal drill banks; depends on sandbox hardening.)
+- "New Problem" form in the TUI (title, description, examples, hints, solution)
+- Stored with `source = "custom"` in the DB
+- Included in random problem selection and review queue
+- Export custom problems to JSON for sharing
+
 ### Vim / Emacs Keybindings in Code Editor
 Reduces friction for users who live in modal editors.
 - Toggle between Standard / Vim / Emacs modes in Settings
 - Persisted per user profile
 - `i` / `Esc` for insert/normal mode in Vim mode; `C-x C-s` equivalent in Emacs
+
+---
+
+## Big Bets
+
+Larger directional investments that would change what the product *is*,
+not just add to it.
+
+### AI Mock Interviewer
+The single biggest differentiator vs. LeetCode-style grinding: a
+conversational interviewer persona wrapped around the existing practice loop.
+- Interviewer introduces the problem verbally, answers clarifying questions
+- Follow-up probes: "What's the time complexity?", "Can you optimize space?"
+- Interruptions and hints modeled on real interviewer behaviour
+- Post-session transcript + rubric evaluation (communication, correctness,
+  optimization, testing instincts)
+- Builds directly on chat_service + interview simulation mode
+
+### Behavioural Interview Track
+Freeform question generation already exists — extend it to a full track.
+- STAR-format answer coaching with per-dimension rubric scoring
+- Question banks by seniority and role type
+- Draft answers evolve across attempts; spaced repetition for stories
+
+### System Design Track
+Text-based system design practice, LLM-evaluated.
+- Prompt bank (design a URL shortener, rate limiter, news feed …)
+- Structured answer template (requirements → estimates → API → data → scaling)
+- LLM rubric evaluation with follow-up questions
+- Ties into learning plans and company profiles for senior-role prep
+
+### Job Application Tracker
+The repo is called *job-search-cli* — close the loop from practice to search.
+- Track applications: company, role, stage, dates, contacts, outcomes
+- Link each application to its JD prep, company profile, and sim sessions
+- Pipeline view + reminders for follow-ups
+- Turns the app from "interview prep" into an end-to-end job-search companion
+
+### Distribution & Release Engineering
+- Publish to PyPI (`pipx install codepractice`), versioned releases + changelog
+- Ratchet CI coverage gate up from 40% toward 70%
+- Screenshots/asciinema demo in README for discoverability
 
 ---
 
@@ -109,13 +190,6 @@ Extend beyond Python to other common interview languages.
 - Go, Rust, Java stubs
 - Language selector per problem; LLM evaluation adapts to chosen language
 - Syntax highlighting theme per language in the code editor
-
-### Problem Bookmarking & Solution Library
-Save and revisit favourite problems and solutions.
-- Bookmark button on every problem card
-- "My Library" screen with bookmarked problems and user solutions
-- Filter by tag, difficulty, category
-- Compare user solution vs AI-optimal solution side-by-side
 
 ### Daily Reminder / Notification System
 Nudges users to keep their streak alive.
@@ -134,10 +208,6 @@ Lightweight social accountability.
 - Opt-in telemetry uploads solve rate, avg score, and streak (no code)
 - "How do you compare?" section on the Progress screen
 - Percentile rank among users at the same experience level
-
-### Custom Problem Creation
-Let users define their own drill problems.
-- "New Problem" form in the TUI (title, description, examples, hints, solution)
-- Stored with `source = "custom"` in the DB
-- Included in random problem selection and review queue
-- Export custom problems to JSON for sharing
+- ⚠️ Requires a hosted backend, which cuts against the "no data sent to the
+  cloud" promise in the README — needs a deliberate privacy design (or a
+  local-only "compare against published percentiles" variant) before pickup.

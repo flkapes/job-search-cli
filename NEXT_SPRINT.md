@@ -32,18 +32,35 @@ Features currently pending implementation, in rough priority order.
 
 ---
 
-## 1. Interview Simulation Mode ✅ (completed 2026-05-22)
+## Also done
 
-**Location:** Practice flow (new mode toggle)
+- ✅ **Interview Simulation Mode** (completed 2026-05-22) — dashboard entry,
+  countdown timer + lock behavior, hint-peek penalty tracking, scorecard
+  aggregation, `session_type = "interview_simulation"` persistence
+  (migration `009_*.sql`).
+- ✅ **Goal Evolution Tracking** (completed 2026-05-22) — `goal_history`
+  persistence (migration `008_*.sql`), `codepractice goal "..."` CLI command,
+  "Update Goal" action on the Learning Plan screen, goal-drift panel in
+  Progress.
 
-A timed, no-hints practice mode that mirrors real interview conditions.
+---
+
+## 1. Deterministic Test-Case Verification
+
+**Location:** `codepractice/utils/code_runner.py` + answer evaluator + practice flow
+
+Make correctness verifiable instead of purely LLM-judged.
+`run_with_test_cases` currently injects `_expected` into the script but never
+compares it against actual output — "passed" only means exit code 0. When the
+LLM is offline, every submission scores 0.5 regardless of correctness.
 
 **Implementation notes:**
-- Added dashboard entry for interview simulation mode
-- Added countdown timer + lock behavior with explicit finish action
-- Disabled hints in simulation mode and tracked peek attempts penalty
-- Added scorecard aggregation (attempted/solved/avg/category + pass/fail)
-- Stored sessions with `session_type = "interview_simulation"` and metadata
+- Compare captured stdout / function return values against `expected_output`
+  per test case; report per-case pass/fail
+- Feed deterministic results into `AnswerEvaluatorService` as a score
+  floor/ceiling — the LLM refines, it doesn't overrule failing tests
+- Show a per-test-case results table in the practice feedback panel
+- Prerequisite for fair XP (item 2) and trustworthy simulation scorecards
 
 ---
 
@@ -52,6 +69,7 @@ A timed, no-hints practice mode that mirrors real interview conditions.
 **Location:** Progress screen + attempt completion flow
 
 Keeps motivation high across long preparation streaks.
+(Do after item 1 so XP is grounded in real correctness.)
 
 **Implementation notes:**
 - Add XP accrual rules by difficulty × score
@@ -62,21 +80,37 @@ Keeps motivation high across long preparation streaks.
 
 ---
 
-## 3. Goal Evolution Tracking
+## 3. Problem Bookmarking & Solution Library
 
-**Location:** Learning Plan + Progress + CLI
+**Location:** Practice + new "My Library" screen
 
-Makes the learning plan truly adaptive over time.
+Save and revisit favorite problems and your own solutions.
+(Promoted: small schema + one screen, builds on existing notes/replay.)
 
 **Implementation notes:**
-- Add `goal_history` persistence and retrieval
-- Add CLI command to update goal text and trigger plan evolution
-- Add "Update Goal" action in learning plan UI
-- Surface week-over-week drift summary in Progress
+- Add bookmark toggle in problem card
+- Persist saved problem IDs and associated user solutions
+- Create library screen with filter/sort by tag/difficulty/category
+- Add side-by-side comparison with AI suggested solution
 
 ---
 
-## 4. Company-Specific Prep Profiles
+## 4. Cloud LLM Backend Option
+
+**Location:** `codepractice/llm/client.py` + config + setup wizard
+
+Add an Anthropic / OpenAI-compatible API backend alongside Ollama and
+LM Studio. Local-first stays the default; widens the audience to users
+without a local LLM and improves structured-output reliability everywhere.
+
+**Implementation notes:**
+- New `LLMBackend` subclass reading API key from `.env` (never persisted to DB)
+- Extend `codepractice check` and the setup wizard with the new backend
+- Document the privacy trade-off in README (local remains the default)
+
+---
+
+## 5. Company-Specific Prep Profiles
 
 **Location:** New company browser + Learning Plan integrations
 
@@ -90,7 +124,22 @@ Tailored problem sets for specific employers.
 
 ---
 
-## 5. Multi-Language Practice Support
+## 6. Custom Problem Creation
+
+**Location:** New problem form + problem bank + review queue
+
+Let users author their own drill problems.
+
+**Implementation notes:**
+- "New Problem" form in the TUI (title, description, examples, hints, solution)
+- Store with `source = "custom"`; include in random selection + review queue
+- Export/import custom problems as JSON
+- Harden the code-runner sandbox (resource limits, no network) before
+  supporting *imported* problems
+
+---
+
+## 7. Multi-Language Practice Support
 
 **Location:** Practice screen + code runner + evaluator
 
@@ -101,17 +150,3 @@ Extend beyond Python to common interview languages.
 - Add runner/evaluator adapters for JavaScript and Go first
 - Extend prompting and syntax highlighting per language
 - Ensure persistence tracks chosen language per attempt
-
----
-
-## 6. Problem Bookmarking & Solution Library
-
-**Location:** Practice + new "My Library" screen
-
-Save and revisit favorite problems and your own solutions.
-
-**Implementation notes:**
-- Add bookmark toggle in problem card
-- Persist saved problem IDs and associated user solutions
-- Create library screen with filter/sort by tag/difficulty/category
-- Add side-by-side comparison with AI suggested solution
