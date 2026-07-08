@@ -353,14 +353,11 @@ class ProgressContent(Widget):
             from codepractice.tui.screens.practice import PracticeContent
             content = self.app.query_one("#content")
             content.remove_children()
-            widget = PracticeContent()
-            content.mount(widget)
-            # start_session with weak_area_drill type
-            widget._init_session_type = "weak_area_drill"
-            if cat:
-                widget._drill_category = cat
-                widget._drill_subcategory = sub
-            widget.call_later(widget._init_session)
+            content.mount(PracticeContent(
+                session_type="weak_area_drill",
+                drill_category=cat,
+                drill_subcategory=sub,
+            ))
         except Exception:
             pass
 

@@ -72,6 +72,8 @@ Chat with your AI coding coach. It knows your profile, current plan, recent perf
 ### ✅ Verified Test Cases
 Submissions run against each problem's examples and the actual output is compared to the expected output. The AI refines the score but can't pass code that fails its test cases — and when the LLM is offline, scoring falls back to the real test results.
 
+All **53 bundled problems** — every DSA pattern at every difficulty, three per Python topic, plus a practical set — ship in verifiable input/output format, and every reference solution is machine-checked against its examples in CI.
+
 ### 🏆 XP, Levels & Achievements
 - XP per attempt scaled by difficulty × score, with speed and no-hint bonuses
 - 8 level tiers from **Intern** to **Distinguished Engineer**

@@ -29,9 +29,26 @@ All notable changes to CodePractice are documented here.
 - **Interview simulation mode** and **goal evolution tracking** (earlier in
   this cycle).
 
+### Changed
+- **Problem bank rewritten and expanded** — 53 bundled problems (up from 27),
+  covering every DSA pattern at easy/medium/hard, three problems per Python
+  topic, and a new practical category. All problems use verifiable
+  stdin/stdout examples, and every reference solution is machine-checked
+  against its examples in CI, so verified scoring and offline evaluation work
+  on all bundled content.
+
 ### Fixed
 - Test-case execution previously treated any clean exit as a pass.
 - LLM-offline evaluation no longer blanket-scores 0.5 when test results exist.
+- DSA and Python track drills now honor the selected pattern/topic (they
+  previously served random problems from the whole category), and "Next
+  problem" keeps the drill's filters.
+- "Start Today's Practice" now drills the active plan's task instead of
+  opening unfiltered free practice.
+- The settings screen offers all four LLM backends (it listed only the local
+  ones) and documents where cloud API keys live.
+- The offline generation fallback for DSA drills generated Python-fundamentals
+  problems.
 - Simulation scorecard rendering on the streaming panel.
 
 ### Security

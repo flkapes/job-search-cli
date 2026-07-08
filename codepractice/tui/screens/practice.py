@@ -104,6 +104,7 @@ class PracticeContent(Widget):
     _init_session_type: str = "free"
     _drill_category: str | None = None
     _drill_subcategory: str | None = None
+    _drill_difficulty: str | None = None
     _simulation_mode: bool = False
     _simulation_duration_sec: int = 0
     _simulation_deadline: datetime | None = None
@@ -111,13 +112,31 @@ class PracticeContent(Widget):
     _peek_attempts: int = 0
     _language: str = "python"
 
-    def __init__(self, review_mode: bool = False, simulation_mode: bool = False, simulation_duration_sec: int = 1800, **kwargs):
+    def __init__(
+        self,
+        review_mode: bool = False,
+        simulation_mode: bool = False,
+        simulation_duration_sec: int = 1800,
+        session_type: str | None = None,
+        drill_category: str | None = None,
+        drill_subcategory: str | None = None,
+        drill_difficulty: str | None = None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self._review_mode = review_mode
         self._simulation_mode = simulation_mode
         self._simulation_duration_sec = simulation_duration_sec if simulation_mode else 0
         if simulation_mode:
             self._init_session_type = "interview_simulation"
+        elif session_type:
+            self._init_session_type = session_type
+        if drill_category:
+            self._drill_category = drill_category
+        if drill_subcategory:
+            self._drill_subcategory = drill_subcategory
+        if drill_difficulty:
+            self._drill_difficulty = drill_difficulty
 
     def compose(self) -> ComposeResult:
         with Horizontal(id="practice-top-bar"):
@@ -204,9 +223,11 @@ class PracticeContent(Widget):
             self._session_id = self.app.session_repo.start_session(session_type, metadata=metadata)
         except Exception:
             self._session_id = None
-        cat = getattr(self, "_drill_category", None)
-        sub = getattr(self, "_drill_subcategory", None)
-        self._load_next_problem(category=cat, subcategory=sub)
+        self._load_next_problem(
+            category=self._drill_category,
+            subcategory=self._drill_subcategory,
+            difficulty=self._drill_difficulty,
+        )
 
     def _load_next_problem(
         self,
@@ -236,16 +257,24 @@ class PracticeContent(Widget):
             self._show_problem()
         else:
             # Try AI generation
-            self._generate_ai_problem(category, difficulty)
+            self._generate_ai_problem(category, difficulty, subcategory)
 
-    def _generate_ai_problem(self, category: str | None, difficulty: str | None) -> None:
+    def _generate_ai_problem(
+        self,
+        category: str | None,
+        difficulty: str | None,
+        subcategory: str | None = None,
+    ) -> None:
         try:
             from codepractice.llm.services.problem_generator import ProblemGeneratorService
             gen = ProblemGeneratorService(self.app.llm)
-            problem = gen.generate_python_fundamental(
-                "Python Fundamentals", category or "vocabulary",
-                difficulty or "medium"
-            )
+            if category == "dsa":
+                problem = gen.generate_dsa(subcategory or "two_pointers", difficulty or "medium")
+            else:
+                problem = gen.generate_python_fundamental(
+                    "Python Fundamentals", subcategory or "vocabulary",
+                    difficulty or "medium"
+                )
             if problem:
                 # Save to DB
                 pid = self.app.problem_repo.create(problem.to_db())
@@ -525,7 +554,12 @@ class PracticeContent(Widget):
     def action_next_problem(self) -> None:
         if self._simulation_locked:
             return
-        self._load_next_problem()
+        # Preserve drill filters so "Next" stays inside the chosen track
+        self._load_next_problem(
+            category=self._drill_category,
+            subcategory=self._drill_subcategory,
+            difficulty=self._drill_difficulty,
+        )
 
     def action_back_to_problem(self) -> None:
         if self.current_phase == "coding":

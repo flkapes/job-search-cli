@@ -4,266 +4,614 @@
     "category": "python_fundamentals",
     "subcategory": "vocabulary",
     "difficulty": "easy",
-    "title": "Dictionary Comprehension Filter",
-    "description": "Write a dictionary comprehension that takes a dictionary of student names → scores and returns only students who scored above 80.\n\nFor example, given `{'Alice': 92, 'Bob': 67, 'Charlie': 85, 'Diana': 73}`, return `{'Alice': 92, 'Charlie': 85}`.",
-    "constraints": "Must use a single dictionary comprehension — no loops or filter().",
+    "title": "Squares of the Evens",
+    "description": "Using a single list comprehension, build the squares of the even numbers\nin the input (preserving order) and print them space-separated.\n\n**Input**: the integers, space-separated, on one line.\n\n**Output**: the squares of the even values, space-separated.",
+    "constraints": "1 <= n <= 10^4; at least one even value",
     "examples": [
-      {"input": "{'Alice': 92, 'Bob': 67, 'Charlie': 85}", "output": "{'Alice': 92, 'Charlie': 85}", "explanation": "Only Alice and Charlie have scores above 80."}
+      {
+        "input": "1 2 3 4",
+        "output": "4 16",
+        "explanation": "2^2 and 4^2."
+      },
+      {
+        "input": "6 5 2",
+        "output": "36 4",
+        "explanation": "Order is preserved."
+      }
     ],
     "hints": [
-      "Dictionary comprehensions look like: {k: v for k, v in dict.items() if condition}",
-      "Use .items() to iterate over key-value pairs.",
-      "The condition goes after the for clause."
+      "A comprehension can filter and transform in one expression: [x*x for x in nums if ...]."
     ],
-    "solution": {"code": "def filter_high_scores(scores):\n    return {name: score for name, score in scores.items() if score > 80}", "explanation": "We iterate over all key-value pairs and keep only those where score > 80.", "time_complexity": "O(n)", "space_complexity": "O(n)"},
-    "tags": ["comprehension", "dictionary", "filtering"]
+    "solution": {
+      "code": "import sys\n\nnums = map(int, sys.stdin.read().split())\nsquares = [x * x for x in nums if x % 2 == 0]\nprint(\" \".join(map(str, squares)))",
+      "explanation": "One comprehension both filters (if) and maps (x*x).",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)"
+    },
+    "tags": [
+      "comprehensions"
+    ]
   },
   {
     "source": "static",
     "category": "python_fundamentals",
     "subcategory": "vocabulary",
     "difficulty": "medium",
-    "title": "Generator Pipeline",
-    "description": "Create a generator pipeline that:\n1. Takes an iterable of strings\n2. Strips whitespace from each\n3. Filters out empty strings\n4. Converts to uppercase\n5. Yields results lazily\n\nImplement each step as a separate generator function, then chain them.",
-    "constraints": "Must use generators (yield), not list comprehensions. Each step should be its own generator.",
+    "title": "Fibonacci Generator",
+    "description": "Implement `fib()` as a generator function (using `yield`) that produces the\nFibonacci sequence `0, 1, 1, 2, ...` indefinitely, then print the first `n`\nvalues.\n\n**Input**: a single integer `n`.\n\n**Output**: the first `n` Fibonacci numbers, space-separated.",
+    "constraints": "1 <= n <= 80",
     "examples": [
-      {"input": "[' hello ', '', '  world  ', '  ', 'python']", "output": "['HELLO', 'WORLD', 'PYTHON']", "explanation": "Empty/whitespace-only strings are filtered, rest are stripped and uppercased."}
+      {
+        "input": "5",
+        "output": "0 1 1 2 3",
+        "explanation": "The first five values."
+      },
+      {
+        "input": "1",
+        "output": "0",
+        "explanation": "Just the seed value."
+      }
     ],
     "hints": [
-      "A generator function uses 'yield' instead of 'return'.",
-      "You can chain generators: gen3(gen2(gen1(data)))",
-      "Use str.strip() to remove whitespace and check if result is truthy."
+      "A generator keeps state between yields \u2014 no list needed.",
+      "itertools.islice slices any iterator."
     ],
-    "solution": {"code": "def strip_items(iterable):\n    for item in iterable:\n        yield item.strip()\n\ndef filter_empty(iterable):\n    for item in iterable:\n        if item:\n            yield item\n\ndef to_upper(iterable):\n    for item in iterable:\n        yield item.upper()\n\ndef pipeline(data):\n    return to_upper(filter_empty(strip_items(data)))", "explanation": "Each generator handles one transformation. Chaining them creates a lazy pipeline that processes items on demand.", "time_complexity": "O(n)", "space_complexity": "O(1)"},
-    "tags": ["generator", "pipeline", "lazy-evaluation"]
+    "solution": {
+      "code": "import sys\nfrom itertools import islice\n\ndef fib():\n    a, b = 0, 1\n    while True:\n        yield a\n        a, b = b, a + b\n\nn = int(sys.stdin.read().strip())\nprint(\" \".join(str(x) for x in islice(fib(), n)))",
+      "explanation": "yield suspends the function, making an infinite lazy sequence safe to define.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(1)"
+    },
+    "tags": [
+      "generators",
+      "yield"
+    ]
   },
   {
     "source": "static",
     "category": "python_fundamentals",
     "subcategory": "vocabulary",
-    "difficulty": "hard",
-    "title": "Custom Context Manager with Exception Handling",
-    "description": "Implement a context manager class `Timer` that:\n1. Records how long the block takes to execute\n2. Prints the elapsed time on exit\n3. If an exception occurs inside the block, logs the exception type and message but does NOT suppress it\n4. Stores the elapsed time in a `.elapsed` attribute\n\nUse the `__enter__` / `__exit__` protocol (not @contextmanager).",
-    "constraints": "Must implement __enter__ and __exit__. Do not suppress exceptions.",
+    "difficulty": "medium",
+    "title": "Call-Counting Decorator",
+    "description": "Write a decorator `count_calls` that counts invocations of the function it\nwraps (store the count on the wrapper, e.g. `wrapper.calls`). Apply it to a\nfunction, call the function `n` times, then print the recorded count.\n\n**Input**: a single integer `n`.\n\n**Output**: the call count.",
+    "constraints": "1 <= n <= 10^4",
     "examples": [
-      {"input": "with Timer() as t:\n    time.sleep(0.1)", "output": "Timer: 0.10s", "explanation": "The timer measures the block duration."}
+      {
+        "input": "3",
+        "output": "3",
+        "explanation": "Three calls recorded by the decorator."
+      },
+      {
+        "input": "1",
+        "output": "1",
+        "explanation": "A single call."
+      }
     ],
     "hints": [
-      "__enter__ should start timing and return self.",
-      "__exit__ receives (exc_type, exc_val, exc_tb) — return False to propagate exceptions.",
-      "Use time.perf_counter() for accurate timing."
+      "A decorator returns a replacement function that does bookkeeping, then delegates.",
+      "functools.wraps preserves the wrapped function's metadata."
     ],
-    "solution": {"code": "import time\n\nclass Timer:\n    def __init__(self):\n        self.elapsed = 0.0\n        self._start = 0.0\n\n    def __enter__(self):\n        self._start = time.perf_counter()\n        return self\n\n    def __exit__(self, exc_type, exc_val, exc_tb):\n        self.elapsed = time.perf_counter() - self._start\n        print(f'Timer: {self.elapsed:.2f}s')\n        if exc_type:\n            print(f'Exception: {exc_type.__name__}: {exc_val}')\n        return False  # Don't suppress exceptions", "explanation": "The context manager protocol: __enter__ starts the timer, __exit__ calculates elapsed time. Returning False from __exit__ lets exceptions propagate.", "time_complexity": "O(1)", "space_complexity": "O(1)"},
-    "tags": ["context-manager", "protocol", "exception-handling"]
+    "solution": {
+      "code": "import sys\nfrom functools import wraps\n\ndef count_calls(func):\n    @wraps(func)\n    def wrapper(*args, **kwargs):\n        wrapper.calls += 1\n        return func(*args, **kwargs)\n    wrapper.calls = 0\n    return wrapper\n\n@count_calls\ndef greet():\n    return \"hi\"\n\nn = int(sys.stdin.read().strip())\nfor _ in range(n):\n    greet()\nprint(greet.calls)",
+      "explanation": "The closure owns mutable state (the counter) attached to the wrapper itself.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(1)"
+    },
+    "tags": [
+      "decorators",
+      "closures"
+    ]
   },
   {
     "source": "static",
     "category": "python_fundamentals",
     "subcategory": "builtins",
     "difficulty": "easy",
-    "title": "Enumerate with Custom Start",
-    "description": "Given a list of items, use `enumerate` to create a numbered display string starting from 1 (not 0).\n\nReturn a list of strings like `['1. apple', '2. banana', '3. cherry']`.",
-    "constraints": "Must use enumerate(). One-liner preferred.",
+    "title": "Sort by Length, then Alphabet",
+    "description": "Sort words by length; break ties alphabetically. Use `sorted` with a key\nfunction \u2014 no manual sorting.\n\n**Input**: the words, space-separated, on one line.\n\n**Output**: the sorted words, space-separated.",
+    "constraints": "1 <= words <= 10^4; lowercase",
     "examples": [
-      {"input": "['apple', 'banana', 'cherry']", "output": "['1. apple', '2. banana', '3. cherry']", "explanation": "enumerate(items, 1) starts counting from 1."}
+      {
+        "input": "banana kiwi apple fig",
+        "output": "fig kiwi apple banana",
+        "explanation": "3, 4, 5, 6 letters."
+      },
+      {
+        "input": "bb aa",
+        "output": "aa bb",
+        "explanation": "Same length \u2014 alphabetical order decides."
+      }
     ],
     "hints": [
-      "enumerate() takes an optional 'start' parameter.",
-      "Use a list comprehension with f-strings.",
-      "enumerate(items, 1) gives (1, 'apple'), (2, 'banana'), ..."
+      "A tuple key sorts by its elements in order: key=lambda w: (len(w), w)."
     ],
-    "solution": {"code": "def numbered_list(items):\n    return [f'{i}. {item}' for i, item in enumerate(items, 1)]", "explanation": "enumerate(items, 1) counts from 1. We format each pair into a numbered string.", "time_complexity": "O(n)", "space_complexity": "O(n)"},
-    "tags": ["enumerate", "builtins", "list-comprehension"]
+    "solution": {
+      "code": "import sys\n\nwords = sys.stdin.read().split()\nprint(\" \".join(sorted(words, key=lambda w: (len(w), w))))",
+      "explanation": "Tuple keys give lexicographic multi-criteria sorting for free.",
+      "time_complexity": "O(n log n)",
+      "space_complexity": "O(n)"
+    },
+    "tags": [
+      "sorted",
+      "key-functions"
+    ]
   },
   {
     "source": "static",
     "category": "python_fundamentals",
     "subcategory": "builtins",
     "difficulty": "medium",
-    "title": "Group Items with itertools.groupby",
-    "description": "Given a sorted list of tuples `(department, employee_name)`, group employees by department using `itertools.groupby`.\n\nReturn a dictionary mapping department → list of employee names.",
-    "constraints": "Must use itertools.groupby. Input is pre-sorted by department.",
+    "title": "Top Three Words",
+    "description": "Print the three most frequent words. Order by count descending, then\nalphabetically. Use `collections.Counter`.\n\n**Input**: the text (lowercase words), on one line.\n\n**Output**: three lines of `word count`.",
+    "constraints": "At least 3 distinct words",
     "examples": [
-      {"input": "[('eng', 'Alice'), ('eng', 'Bob'), ('sales', 'Charlie'), ('sales', 'Diana')]", "output": "{'eng': ['Alice', 'Bob'], 'sales': ['Charlie', 'Diana']}", "explanation": "groupby groups consecutive elements with the same key."}
+      {
+        "input": "the cat and the hat and the bat",
+        "output": "the 3\nand 2\nbat 1",
+        "explanation": "bat, cat and hat all appear once \u2014 'bat' wins alphabetically."
+      },
+      {
+        "input": "b b a a c",
+        "output": "a 2\nb 2\nc 1",
+        "explanation": "a and b tie on 2; alphabetical order breaks it."
+      }
     ],
     "hints": [
-      "itertools.groupby returns (key, group_iterator) pairs.",
-      "The input must be sorted by the grouping key for groupby to work correctly.",
-      "Use operator.itemgetter(0) or a lambda as the key function."
+      "Counter counts in one line; sort its items with a (\u2212count, word) key."
     ],
-    "solution": {"code": "from itertools import groupby\nfrom operator import itemgetter\n\ndef group_by_dept(employees):\n    return {\n        dept: [name for _, name in group]\n        for dept, group in groupby(employees, key=itemgetter(0))\n    }", "explanation": "groupby yields (key, sub_iterator) for runs of same key. We extract just the names from each group.", "time_complexity": "O(n)", "space_complexity": "O(n)"},
-    "tags": ["itertools", "groupby", "data-processing"]
+    "solution": {
+      "code": "import sys\nfrom collections import Counter\n\ncounts = Counter(sys.stdin.read().split())\nranked = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))\nfor word, count in ranked[:3]:\n    print(word, count)",
+      "explanation": "Counter + a compound sort key handles frequency ranking with deterministic ties.",
+      "time_complexity": "O(n log n)",
+      "space_complexity": "O(n)"
+    },
+    "tags": [
+      "collections",
+      "counter"
+    ]
   },
   {
     "source": "static",
     "category": "python_fundamentals",
     "subcategory": "builtins",
     "difficulty": "medium",
-    "title": "functools.reduce to Build Nested Dict",
-    "description": "Use `functools.reduce` to set a value in a nested dictionary given a list of keys.\n\nFor example, given keys `['a', 'b', 'c']` and value `42`, produce `{'a': {'b': {'c': 42}}}`.",
-    "constraints": "Must use functools.reduce. Build from right to left.",
+    "title": "Numbered Score Report",
+    "description": "Combine parallel lists of names and scores into a numbered report using\n`zip` and `enumerate` (no index arithmetic).\n\n**Input**: line 1 \u2014 the names; line 2 \u2014 the scores (same count).\n\n**Output**: one line per entry: `{rank}. {name} {score}` with ranks from 1.",
+    "constraints": "1 <= entries <= 10^3",
     "examples": [
-      {"input": "keys=['a','b','c'], value=42", "output": "{'a': {'b': {'c': 42}}}", "explanation": "Each key wraps the previous result in a new dict."}
+      {
+        "input": "Alice Bob\n90 85",
+        "output": "1. Alice 90\n2. Bob 85",
+        "explanation": "zip pairs the columns; enumerate numbers them."
+      },
+      {
+        "input": "Zoe\n77",
+        "output": "1. Zoe 77",
+        "explanation": "A single entry."
+      }
     ],
     "hints": [
-      "Think about building from the inside out: start with {c: 42}, then {b: {c: 42}}, etc.",
-      "Reverse the keys and reduce.",
-      "The reducing function takes (accumulator, key) and returns {key: accumulator}."
+      "enumerate(zip(names, scores), start=1) yields (rank, (name, score))."
     ],
-    "solution": {"code": "from functools import reduce\n\ndef nested_dict(keys, value):\n    return reduce(lambda acc, key: {key: acc}, reversed(keys), value)", "explanation": "We reverse the keys and fold from left, wrapping each level. reduce(f, ['c','b','a'], 42) → f('c', 42) → {'c': 42} → f('b', {'c': 42}) → ...", "time_complexity": "O(n)", "space_complexity": "O(n)"},
-    "tags": ["functools", "reduce", "nested-dict"]
+    "solution": {
+      "code": "import sys\n\nlines = sys.stdin.read().splitlines()\nnames = lines[0].split()\nscores = lines[1].split()\nfor rank, (name, score) in enumerate(zip(names, scores), start=1):\n    print(f\"{rank}. {name} {score}\")",
+      "explanation": "zip fuses parallel sequences; enumerate supplies the counter pythonically.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(1)"
+    },
+    "tags": [
+      "zip",
+      "enumerate"
+    ]
   },
   {
     "source": "static",
     "category": "python_fundamentals",
     "subcategory": "oop",
     "difficulty": "easy",
-    "title": "Property with Validation",
-    "description": "Create a `Temperature` class with a `celsius` property that:\n1. Stores temperature in Celsius\n2. Validates that temperature >= -273.15 (absolute zero) on set\n3. Has a read-only `fahrenheit` property that computes F = C * 9/5 + 32",
-    "constraints": "Use @property decorator. Raise ValueError for invalid temperatures.",
+    "title": "Vector Addition with Dunders",
+    "description": "Implement a `Vector` class supporting `v1 + v2` via `__add__` and printing\nas `Vector(x, y)` via `__repr__`. Read two vectors and print their sum.\n\n**Input**: two lines, each `x y`.\n\n**Output**: `Vector(x, y)` for the sum.",
+    "constraints": "Integer components",
     "examples": [
-      {"input": "t = Temperature(100); t.fahrenheit", "output": "212.0", "explanation": "100°C = 212°F"},
-      {"input": "t.celsius = -300", "output": "ValueError", "explanation": "Below absolute zero is invalid."}
+      {
+        "input": "1 2\n3 4",
+        "output": "Vector(4, 6)",
+        "explanation": "(1+3, 2+4)."
+      },
+      {
+        "input": "-1 5\n1 -5",
+        "output": "Vector(0, 0)",
+        "explanation": "Components cancel."
+      }
     ],
     "hints": [
-      "Use @property for the getter and @celsius.setter for the setter.",
-      "Store the actual value in a private attribute like _celsius.",
-      "fahrenheit only needs a @property getter (no setter)."
+      "__add__ returns a new Vector; __repr__ controls how print displays it."
     ],
-    "solution": {"code": "class Temperature:\n    def __init__(self, celsius=0):\n        self.celsius = celsius  # Uses the setter\n\n    @property\n    def celsius(self):\n        return self._celsius\n\n    @celsius.setter\n    def celsius(self, value):\n        if value < -273.15:\n            raise ValueError('Temperature below absolute zero')\n        self._celsius = value\n\n    @property\n    def fahrenheit(self):\n        return self._celsius * 9/5 + 32", "explanation": "The @property decorator creates a managed attribute. The setter validates input. fahrenheit is computed on-the-fly.", "time_complexity": "O(1)", "space_complexity": "O(1)"},
-    "tags": ["property", "validation", "oop"]
+    "solution": {
+      "code": "import sys\n\nclass Vector:\n    def __init__(self, x, y):\n        self.x, self.y = x, y\n\n    def __add__(self, other):\n        return Vector(self.x + other.x, self.y + other.y)\n\n    def __repr__(self):\n        return f\"Vector({self.x}, {self.y})\"\n\nlines = sys.stdin.read().splitlines()\na = Vector(*map(int, lines[0].split()))\nb = Vector(*map(int, lines[1].split()))\nprint(a + b)",
+      "explanation": "Dunder methods let user types participate in built-in syntax like + and print.",
+      "time_complexity": "O(1)",
+      "space_complexity": "O(1)"
+    },
+    "tags": [
+      "dunder-methods",
+      "classes"
+    ]
   },
   {
     "source": "static",
     "category": "python_fundamentals",
     "subcategory": "oop",
     "difficulty": "medium",
-    "title": "Custom Iterator: Fibonacci",
-    "description": "Implement a `Fibonacci` iterator class that yields Fibonacci numbers up to a maximum value.\n\nThe class must implement `__iter__` and `__next__` protocol.\n\nUsage: `list(Fibonacci(20))` → `[0, 1, 1, 2, 3, 5, 8, 13]`",
-    "constraints": "Must implement __iter__ and __next__. Raise StopIteration when done.",
+    "title": "Temperature as a Property",
+    "description": "Build a `Temperature` class that stores Celsius and exposes Fahrenheit as a\nread-only `@property` computing `C * 9 / 5 + 32`. Read a Celsius integer\nand print the Fahrenheit value as an integer.\n\n**Input**: an integer Celsius value.\n\n**Output**: the Fahrenheit value (integer).",
+    "constraints": "-273 <= C <= 10^4; inputs chosen so F is integral",
     "examples": [
-      {"input": "list(Fibonacci(10))", "output": "[0, 1, 1, 2, 3, 5, 8]", "explanation": "Fibonacci numbers up to (not exceeding) 10."}
+      {
+        "input": "100",
+        "output": "212",
+        "explanation": "Boiling point."
+      },
+      {
+        "input": "0",
+        "output": "32",
+        "explanation": "Freezing point."
+      }
     ],
     "hints": [
-      "__iter__ should return self.",
-      "__next__ should track two state variables (a, b) and advance each call.",
-      "Raise StopIteration when the next value would exceed the max."
+      "@property makes a method readable like an attribute \u2014 no parentheses at the call site."
     ],
-    "solution": {"code": "class Fibonacci:\n    def __init__(self, max_val):\n        self.max_val = max_val\n        self.a, self.b = 0, 1\n\n    def __iter__(self):\n        self.a, self.b = 0, 1\n        return self\n\n    def __next__(self):\n        if self.a > self.max_val:\n            raise StopIteration\n        result = self.a\n        self.a, self.b = self.b, self.a + self.b\n        return result", "explanation": "The iterator protocol: __iter__ returns self (resets state), __next__ yields one value at a time. State is maintained between calls.", "time_complexity": "O(n)", "space_complexity": "O(1)"},
-    "tags": ["iterator", "protocol", "fibonacci"]
+    "solution": {
+      "code": "import sys\n\nclass Temperature:\n    def __init__(self, celsius):\n        self.celsius = celsius\n\n    @property\n    def fahrenheit(self):\n        return self.celsius * 9 // 5 + 32\n\nt = Temperature(int(sys.stdin.read().strip()))\nprint(t.fahrenheit)",
+      "explanation": "Properties compute derived values on access while keeping attribute syntax.",
+      "time_complexity": "O(1)",
+      "space_complexity": "O(1)"
+    },
+    "tags": [
+      "properties",
+      "classes"
+    ]
   },
   {
     "source": "static",
     "category": "python_fundamentals",
     "subcategory": "oop",
-    "difficulty": "hard",
-    "title": "Descriptor Protocol: Validated Fields",
-    "description": "Implement a `TypedField` descriptor that enforces type checking on class attributes.\n\n```python\nclass Person:\n    name = TypedField(str)\n    age = TypedField(int)\n\np = Person()\np.name = 'Alice'  # OK\np.age = 'not a number'  # Raises TypeError\n```\n\nThe descriptor must use `__set_name__`, `__get__`, and `__set__`.",
-    "constraints": "Must implement the full descriptor protocol with __set_name__.",
+    "difficulty": "medium",
+    "title": "Shapes with an Abstract Base",
+    "description": "Define an abstract `Shape` (using `abc.ABC` and `@abstractmethod area()`),\nwith `Rect` and `Circle` subclasses (use pi = 3.14159). Read shapes and\nprint each area with two decimals.\n\n**Input**: line 1 \u2014 the shape count `n`; next `n` lines \u2014 `rect w h` or\n`circle r`.\n\n**Output**: one line per shape: the area, two decimals.",
+    "constraints": "1 <= n <= 100; integer dimensions",
     "examples": [
-      {"input": "p.name = 42", "output": "TypeError", "explanation": "42 is not a str."}
+      {
+        "input": "2\nrect 3 4\ncircle 1",
+        "output": "12.00\n3.14",
+        "explanation": "3*4 and pi*1^2."
+      },
+      {
+        "input": "1\ncircle 2",
+        "output": "12.57",
+        "explanation": "pi * 4 = 12.56636 -> 12.57."
+      }
     ],
     "hints": [
-      "__set_name__(self, owner, name) receives the attribute name automatically.",
-      "__set__ should check isinstance(value, self.expected_type).",
-      "Store the value in the instance's __dict__ using the field name."
+      "An ABC cannot be instantiated; subclasses must implement every abstractmethod."
     ],
-    "solution": {"code": "class TypedField:\n    def __init__(self, expected_type):\n        self.expected_type = expected_type\n        self.name = None\n\n    def __set_name__(self, owner, name):\n        self.name = name\n\n    def __get__(self, obj, objtype=None):\n        if obj is None:\n            return self\n        return obj.__dict__.get(self.name)\n\n    def __set__(self, obj, value):\n        if not isinstance(value, self.expected_type):\n            raise TypeError(\n                f'{self.name} must be {self.expected_type.__name__}, '\n                f'got {type(value).__name__}'\n            )\n        obj.__dict__[self.name] = value", "explanation": "Descriptors intercept attribute access. __set_name__ (Python 3.6+) auto-captures the attribute name. Values are stored in the instance's __dict__, not the descriptor.", "time_complexity": "O(1)", "space_complexity": "O(1)"},
-    "tags": ["descriptor", "protocol", "metaprogramming"]
+    "solution": {
+      "code": "import sys\nfrom abc import ABC, abstractmethod\n\nPI = 3.14159\n\nclass Shape(ABC):\n    @abstractmethod\n    def area(self):\n        ...\n\nclass Rect(Shape):\n    def __init__(self, w, h):\n        self.w, self.h = w, h\n\n    def area(self):\n        return self.w * self.h\n\nclass Circle(Shape):\n    def __init__(self, r):\n        self.r = r\n\n    def area(self):\n        return PI * self.r * self.r\n\nlines = sys.stdin.read().splitlines()\nn = int(lines[0])\nfor i in range(1, n + 1):\n    parts = lines[i].split()\n    if parts[0] == \"rect\":\n        shape = Rect(int(parts[1]), int(parts[2]))\n    else:\n        shape = Circle(int(parts[1]))\n    print(f\"{shape.area():.2f}\")",
+      "explanation": "ABCs enforce the interface; polymorphism dispatches area() per subclass.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(1)"
+    },
+    "tags": [
+      "abc",
+      "inheritance"
+    ]
   },
   {
     "source": "static",
     "category": "python_fundamentals",
     "subcategory": "threading",
-    "difficulty": "easy",
-    "title": "Basic Thread Pool",
-    "description": "Use `concurrent.futures.ThreadPoolExecutor` to download the lengths of multiple URLs in parallel.\n\nGiven a list of URLs, return a dict mapping URL → content length (or -1 on error).\n\nNote: For this exercise, simulate the download with `len(url)` instead of actual HTTP requests.",
-    "constraints": "Must use ThreadPoolExecutor. Use max_workers=4.",
+    "difficulty": "medium",
+    "title": "Thread-Safe Counter",
+    "description": "Spawn `t` threads that each increment a shared counter `m` times. Protect\nthe increment with a `threading.Lock` so the final value is exact, then\nprint it.\n\n**Input**: one line \u2014 `t m`.\n\n**Output**: the final counter value (`t * m`).",
+    "constraints": "1 <= t <= 16; 1 <= m <= 10^5",
     "examples": [
-      {"input": "['http://a.com', 'http://b.com']", "output": "{'http://a.com': 12, 'http://b.com': 12}", "explanation": "Using len(url) as simulated download."}
+      {
+        "input": "4 1000",
+        "output": "4000",
+        "explanation": "Four threads x 1000 increments."
+      },
+      {
+        "input": "2 10",
+        "output": "20",
+        "explanation": "Small but still race-prone without a lock."
+      }
     ],
     "hints": [
-      "Use executor.submit() to schedule tasks.",
-      "Use as_completed() or executor.map() to gather results.",
-      "Wrap individual task logic in a try/except for error handling."
+      "`+=` on a shared int is not atomic \u2014 wrap it in `with lock:`.",
+      "join() every thread before reading the result."
     ],
-    "solution": {"code": "from concurrent.futures import ThreadPoolExecutor, as_completed\n\ndef fetch_lengths(urls, max_workers=4):\n    def fetch(url):\n        try:\n            return url, len(url)  # simulated\n        except Exception:\n            return url, -1\n\n    results = {}\n    with ThreadPoolExecutor(max_workers=max_workers) as executor:\n        futures = {executor.submit(fetch, url): url for url in urls}\n        for future in as_completed(futures):\n            url, length = future.result()\n            results[url] = length\n    return results", "explanation": "ThreadPoolExecutor manages a pool of threads. We submit tasks and collect results as they complete. The context manager ensures clean shutdown.", "time_complexity": "O(n)", "space_complexity": "O(n)"},
-    "tags": ["threading", "concurrent.futures", "parallel"]
+    "solution": {
+      "code": "import sys\nimport threading\n\nt, m = map(int, sys.stdin.read().split())\ncounter = 0\nlock = threading.Lock()\n\ndef work():\n    global counter\n    for _ in range(m):\n        with lock:\n            counter += 1\n\nthreads = [threading.Thread(target=work) for _ in range(t)]\nfor th in threads:\n    th.start()\nfor th in threads:\n    th.join()\nprint(counter)",
+      "explanation": "The lock serializes the read-modify-write so no increment is lost.",
+      "time_complexity": "O(t * m)",
+      "space_complexity": "O(t)"
+    },
+    "tags": [
+      "threading",
+      "locks"
+    ]
   },
   {
     "source": "static",
     "category": "python_fundamentals",
     "subcategory": "threading",
     "difficulty": "medium",
-    "title": "Thread-Safe Counter with Lock",
-    "description": "Implement a thread-safe counter class that can be incremented from multiple threads without race conditions.\n\nThe counter must use `threading.Lock` to protect the shared state.\n\nWrite a test that spawns 10 threads, each incrementing 1000 times, and verifies the final count is 10000.",
-    "constraints": "Must use threading.Lock. The final count must be deterministically correct.",
+    "title": "Parallel Squares with Executors",
+    "description": "Square every input number using `concurrent.futures.ThreadPoolExecutor.map`,\nwhich preserves input order regardless of completion order.\n\n**Input**: the integers, space-separated, on one line.\n\n**Output**: the squares, space-separated, in input order.",
+    "constraints": "1 <= n <= 10^4",
     "examples": [
-      {"input": "10 threads × 1000 increments", "output": "counter.value == 10000", "explanation": "Without a lock, race conditions would give wrong results."}
+      {
+        "input": "1 2 3",
+        "output": "1 4 9",
+        "explanation": "Order matches the input."
+      },
+      {
+        "input": "5 -2",
+        "output": "25 4",
+        "explanation": "Negatives square positive."
+      }
     ],
     "hints": [
-      "Use 'with self.lock:' to acquire and release the lock automatically.",
-      "threading.Lock is a context manager.",
-      "Use threading.Thread(target=func) and .join() to wait for completion."
+      "executor.map is the drop-in parallel version of map \u2014 results come back in order."
     ],
-    "solution": {"code": "import threading\n\nclass SafeCounter:\n    def __init__(self):\n        self.value = 0\n        self._lock = threading.Lock()\n\n    def increment(self):\n        with self._lock:\n            self.value += 1\n\n# Test\ncounter = SafeCounter()\nthreads = []\nfor _ in range(10):\n    t = threading.Thread(target=lambda: [counter.increment() for _ in range(1000)])\n    threads.append(t)\n    t.start()\nfor t in threads:\n    t.join()\nassert counter.value == 10000, f'Expected 10000, got {counter.value}'", "explanation": "Without the lock, multiple threads can read-modify-write the counter simultaneously, causing lost updates. The lock serializes access to the critical section.", "time_complexity": "O(n)", "space_complexity": "O(1)"},
-    "tags": ["threading", "lock", "concurrency", "race-condition"]
+    "solution": {
+      "code": "import sys\nfrom concurrent.futures import ThreadPoolExecutor\n\nnums = list(map(int, sys.stdin.read().split()))\nwith ThreadPoolExecutor(max_workers=4) as executor:\n    squares = list(executor.map(lambda x: x * x, nums))\nprint(\" \".join(map(str, squares)))",
+      "explanation": "The executor manages the pool; map keeps result order deterministic.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)"
+    },
+    "tags": [
+      "concurrent-futures",
+      "thread-pool"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "threading",
+    "difficulty": "medium",
+    "title": "Gathering Async Results",
+    "description": "Define an async function `double(i)` returning `i * 2`, launch one task per\n`i in range(n)` with `asyncio.gather`, and print the results in order.\n\n**Input**: a single integer `n`.\n\n**Output**: the doubled values `0 2 4 ...`, space-separated.",
+    "constraints": "1 <= n <= 10^4",
+    "examples": [
+      {
+        "input": "4",
+        "output": "0 2 4 6",
+        "explanation": "Doubles of 0..3."
+      },
+      {
+        "input": "1",
+        "output": "0",
+        "explanation": "A single task."
+      }
+    ],
+    "hints": [
+      "asyncio.gather awaits many coroutines concurrently and returns results in call order."
+    ],
+    "solution": {
+      "code": "import asyncio\nimport sys\n\nasync def double(i):\n    return i * 2\n\nasync def main(n):\n    results = await asyncio.gather(*(double(i) for i in range(n)))\n    print(\" \".join(map(str, results)))\n\nasyncio.run(main(int(sys.stdin.read().strip())))",
+      "explanation": "gather schedules all coroutines on the event loop and preserves ordering.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)"
+    },
+    "tags": [
+      "asyncio",
+      "coroutines"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "patterns",
+    "difficulty": "easy",
+    "title": "Singleton Settings",
+    "description": "Implement a `Settings` class as a singleton (override `__new__`). Store the\ninput value on one instance, create a second instance, and print whether\nthey are the same object plus the value read from the second.\n\n**Input**: one line \u2014 a value to store.\n\n**Output**: `True {value}`.",
+    "constraints": "Any single-token value",
+    "examples": [
+      {
+        "input": "42",
+        "output": "True 42",
+        "explanation": "Both variables reference one shared instance."
+      },
+      {
+        "input": "hello",
+        "output": "True hello",
+        "explanation": "Works for any stored value."
+      }
+    ],
+    "hints": [
+      "__new__ controls instance creation \u2014 return the cached instance if one exists."
+    ],
+    "solution": {
+      "code": "import sys\n\nclass Settings:\n    _instance = None\n\n    def __new__(cls):\n        if cls._instance is None:\n            cls._instance = super().__new__(cls)\n        return cls._instance\n\nvalue = sys.stdin.read().strip()\nfirst = Settings()\nfirst.value = value\nsecond = Settings()\nprint(second is first, second.value)",
+      "explanation": "Caching the instance in __new__ guarantees a single shared object.",
+      "time_complexity": "O(1)",
+      "space_complexity": "O(1)"
+    },
+    "tags": [
+      "singleton",
+      "design-patterns"
+    ]
   },
   {
     "source": "static",
     "category": "python_fundamentals",
     "subcategory": "patterns",
     "difficulty": "medium",
-    "title": "Observer Pattern",
-    "description": "Implement the Observer pattern in Python.\n\nCreate an `EventEmitter` class that supports:\n- `on(event_name, callback)` — register a listener\n- `off(event_name, callback)` — remove a listener\n- `emit(event_name, *args)` — call all listeners for that event\n\nCallbacks should be called in registration order.",
-    "constraints": "Use a dict of lists to store listeners. Handle missing events gracefully.",
+    "title": "Observer Broadcast",
+    "description": "Implement the observer pattern: a `Subject` with `attach(observer)` and\n`notify(message)`; each observer prints `observer{i}: {message}` when\nnotified. Attach `n` observers (numbered from 1) and send one message.\n\n**Input**: line 1 \u2014 the observer count `n`; line 2 \u2014 the message.\n\n**Output**: `n` lines, one per observer in attach order.",
+    "constraints": "1 <= n <= 100",
     "examples": [
-      {"input": "emitter.on('data', print); emitter.emit('data', 42)", "output": "42", "explanation": "The print callback receives the emitted argument."}
+      {
+        "input": "2\nhello",
+        "output": "observer1: hello\nobserver2: hello",
+        "explanation": "Both observers receive the event."
+      },
+      {
+        "input": "1\nship it",
+        "output": "observer1: ship it",
+        "explanation": "A single subscriber."
+      }
     ],
     "hints": [
-      "Use collections.defaultdict(list) for the listener registry.",
-      "on() appends to the list, off() removes from it.",
-      "emit() iterates and calls each callback with the provided args."
+      "The subject stores observers in a list and loops over them on notify."
     ],
-    "solution": {"code": "from collections import defaultdict\n\nclass EventEmitter:\n    def __init__(self):\n        self._listeners = defaultdict(list)\n\n    def on(self, event, callback):\n        self._listeners[event].append(callback)\n\n    def off(self, event, callback):\n        try:\n            self._listeners[event].remove(callback)\n        except ValueError:\n            pass\n\n    def emit(self, event, *args, **kwargs):\n        for callback in self._listeners.get(event, []):\n            callback(*args, **kwargs)", "explanation": "The Observer pattern decouples event producers from consumers. Using defaultdict avoids KeyError for unregistered events.", "time_complexity": "O(n) per emit", "space_complexity": "O(n)"},
-    "tags": ["design-pattern", "observer", "event-driven"]
+    "solution": {
+      "code": "import sys\n\nclass Observer:\n    def __init__(self, name):\n        self.name = name\n\n    def update(self, message):\n        print(f\"{self.name}: {message}\")\n\nclass Subject:\n    def __init__(self):\n        self._observers = []\n\n    def attach(self, observer):\n        self._observers.append(observer)\n\n    def notify(self, message):\n        for observer in self._observers:\n            observer.update(message)\n\nlines = sys.stdin.read().splitlines()\nn = int(lines[0])\nsubject = Subject()\nfor i in range(1, n + 1):\n    subject.attach(Observer(f\"observer{i}\"))\nsubject.notify(lines[1])",
+      "explanation": "The subject decouples publishers from subscribers via a simple registry.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)"
+    },
+    "tags": [
+      "observer",
+      "design-patterns"
+    ]
   },
   {
     "source": "static",
     "category": "python_fundamentals",
-    "subcategory": "vocabulary",
-    "difficulty": "easy",
-    "title": "Decorator: Call Counter",
-    "description": "Write a decorator `count_calls` that counts how many times a function is called.\n\nThe count should be accessible as `func.call_count`.\n\n```python\n@count_calls\ndef greet(name):\n    return f'Hello, {name}!'\n\ngreet('Alice')\ngreet('Bob')\nprint(greet.call_count)  # 2\n```",
-    "constraints": "Must use functools.wraps. The counter must be attached to the wrapper function.",
+    "subcategory": "patterns",
+    "difficulty": "medium",
+    "title": "Strategy Calculator",
+    "description": "Implement the strategy pattern: map operation names to functions and\ndispatch each request through the mapping \u2014 no if/elif chain per operation.\nSupport `add`, `sub` and `mul`.\n\n**Input**: line 1 \u2014 the request count `n`; next `n` lines \u2014 `op a b`.\n\n**Output**: one result per line.",
+    "constraints": "1 <= n <= 100; integer operands",
     "examples": [
-      {"input": "greet('Alice'); greet('Bob'); greet.call_count", "output": "2", "explanation": "Called twice."}
+      {
+        "input": "2\nadd 2 3\nmul 4 5",
+        "output": "5\n20",
+        "explanation": "Each line dispatches to its strategy."
+      },
+      {
+        "input": "1\nsub 10 4",
+        "output": "6",
+        "explanation": "10 - 4."
+      }
     ],
     "hints": [
-      "Use functools.wraps to preserve the original function's metadata.",
-      "Attach call_count as an attribute on the wrapper function.",
-      "Increment the counter inside the wrapper before/after calling the original."
+      "A dict of callables is the idiomatic strategy registry in Python."
     ],
-    "solution": {"code": "import functools\n\ndef count_calls(func):\n    @functools.wraps(func)\n    def wrapper(*args, **kwargs):\n        wrapper.call_count += 1\n        return func(*args, **kwargs)\n    wrapper.call_count = 0\n    return wrapper", "explanation": "Decorators wrap a function. We add a call_count attribute to the wrapper function itself and increment it on each call. functools.wraps preserves __name__ etc.", "time_complexity": "O(1)", "space_complexity": "O(1)"},
-    "tags": ["decorator", "functools", "closure"]
+    "solution": {
+      "code": "import sys\n\nstrategies = {\n    \"add\": lambda a, b: a + b,\n    \"sub\": lambda a, b: a - b,\n    \"mul\": lambda a, b: a * b,\n}\n\nlines = sys.stdin.read().splitlines()\nn = int(lines[0])\nfor i in range(1, n + 1):\n    op, a, b = lines[i].split()\n    print(strategies[op](int(a), int(b)))",
+      "explanation": "Selecting behavior via a mapping keeps each strategy independent and testable.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(1)"
+    },
+    "tags": [
+      "strategy",
+      "design-patterns"
+    ]
   },
   {
     "source": "static",
     "category": "python_fundamentals",
     "subcategory": "version_control",
     "difficulty": "easy",
-    "title": "Git Merge vs Rebase",
-    "description": "Explain the difference between `git merge` and `git rebase`.\n\nIn your answer:\n1. Describe what each command does to the commit history\n2. When you would choose merge over rebase (and vice versa)\n3. What is the golden rule of rebasing?\n\nType your answer as a detailed text explanation.",
-    "constraints": "This is a conceptual question. Write a clear, structured explanation.",
+    "title": "Branch and Switch",
+    "description": "Print the single git command that creates a branch with the given name\n**and** switches to it (the classic `checkout -b` form).\n\n**Input**: one line \u2014 the branch name.\n\n**Output**: the exact command.",
+    "constraints": "Branch names contain no spaces",
     "examples": [
-      {"input": "explain merge vs rebase", "output": "detailed explanation", "explanation": "Compare commit history shapes, use cases, and the golden rule."}
+      {
+        "input": "feature-login",
+        "output": "git checkout -b feature-login",
+        "explanation": "-b creates and switches in one step."
+      },
+      {
+        "input": "bugfix/timer",
+        "output": "git checkout -b bugfix/timer",
+        "explanation": "Slashes are valid in branch names."
+      }
     ],
     "hints": [
-      "Merge creates a merge commit; rebase replays commits on top of another branch.",
-      "Think about commit history: merge preserves history, rebase linearizes it.",
-      "The golden rule: never rebase commits that have been pushed to a shared branch."
+      "`git branch x` creates without switching; `git checkout -b x` does both."
     ],
-    "solution": {"code": "# This is a conceptual question, not a code problem.\n# Key points:\n# MERGE: Creates a merge commit joining two branches. Preserves full history.\n# REBASE: Replays your commits on top of another branch. Creates linear history.\n# Use merge for: shared branches, preserving context of when branches diverged.\n# Use rebase for: cleaning up local work before merging, linear history.\n# Golden rule: Never rebase commits that others have based work on.", "explanation": "Merge is non-destructive (adds a merge commit), rebase rewrites history (linear but potentially dangerous if shared). The golden rule prevents rewriting public history.", "time_complexity": "N/A", "space_complexity": "N/A"},
-    "tags": ["git", "version-control", "conceptual"]
+    "solution": {
+      "code": "import sys\n\nbranch = sys.stdin.read().strip()\nprint(f\"git checkout -b {branch}\")",
+      "explanation": "checkout -b is shorthand for branch + checkout.",
+      "time_complexity": "O(1)",
+      "space_complexity": "O(1)"
+    },
+    "tags": [
+      "git",
+      "branching"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "version_control",
+    "difficulty": "medium",
+    "title": "Soft Reset",
+    "description": "You committed too early and want to undo the last `n` commits while keeping\nevery change staged. Print the exact command.\n\n**Input**: one line \u2014 the number of commits `n`.\n\n**Output**: `git reset --soft HEAD~n` with your `n`.",
+    "constraints": "1 <= n <= 20",
+    "examples": [
+      {
+        "input": "1",
+        "output": "git reset --soft HEAD~1",
+        "explanation": "Moves the branch pointer back one commit, keeping the index."
+      },
+      {
+        "input": "3",
+        "output": "git reset --soft HEAD~3",
+        "explanation": "Same idea across three commits."
+      }
+    ],
+    "hints": [
+      "--soft keeps both the working tree and the index; --hard would discard your work."
+    ],
+    "solution": {
+      "code": "import sys\n\nn = sys.stdin.read().strip()\nprint(f\"git reset --soft HEAD~{n}\")",
+      "explanation": "Soft reset rewinds history without touching your files or the staging area.",
+      "time_complexity": "O(1)",
+      "space_complexity": "O(1)"
+    },
+    "tags": [
+      "git",
+      "reset"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "version_control",
+    "difficulty": "medium",
+    "title": "Merge or Rebase",
+    "description": "Given the strategy (`merge` or `rebase`) and the branch to integrate,\nprint the exact command you would run from your feature branch.\n\n**Input**: one line \u2014 `strategy branch`.\n\n**Output**: `git {strategy} {branch}`.",
+    "constraints": "strategy is merge or rebase",
+    "examples": [
+      {
+        "input": "merge main",
+        "output": "git merge main",
+        "explanation": "Merge preserves history with a merge commit."
+      },
+      {
+        "input": "rebase main",
+        "output": "git rebase main",
+        "explanation": "Rebase replays your commits for a linear history."
+      }
+    ],
+    "hints": [
+      "Merge keeps true history; rebase rewrites yours on top of the target \u2014 never rebase shared branches."
+    ],
+    "solution": {
+      "code": "import sys\n\nstrategy, branch = sys.stdin.read().split()\nprint(f\"git {strategy} {branch}\")",
+      "explanation": "Both integrate changes; they differ in history shape and safety on shared branches.",
+      "time_complexity": "O(1)",
+      "space_complexity": "O(1)"
+    },
+    "tags": [
+      "git",
+      "merge",
+      "rebase"
+    ]
   }
 ]

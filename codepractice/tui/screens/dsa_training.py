@@ -109,8 +109,9 @@ class DSATrainingContent(Widget):
         from codepractice.tui.screens.practice import PracticeContent
         content = self.app.query_one("#content")
         content.remove_children()
-        widget = PracticeContent()
-        content.mount(widget)
-        widget.call_later(
-            lambda: widget._load_next_problem(category="dsa", difficulty=difficulty)
-        )
+        content.mount(PracticeContent(
+            session_type="dsa",
+            drill_category="dsa",
+            drill_subcategory=pattern_id,
+            drill_difficulty=difficulty or None,
+        ))

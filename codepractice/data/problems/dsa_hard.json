@@ -2,58 +2,353 @@
   {
     "source": "static",
     "category": "dsa",
+    "subcategory": "two_pointers",
+    "difficulty": "hard",
+    "title": "Trapping Rain Water",
+    "description": "Given an elevation map, compute how much rain water it traps.\n\n**Input**: the bar heights, space-separated, on one line.\n\n**Output**: the total units of trapped water.",
+    "constraints": "1 <= n <= 10^5; 0 <= height <= 10^5",
+    "examples": [
+      {
+        "input": "0 1 0 2 1 0 1 3 2 1 2 1",
+        "output": "6",
+        "explanation": "The classic map traps 6 units."
+      },
+      {
+        "input": "4 2 0 3 2 5",
+        "output": "9",
+        "explanation": "Water pools above the middle bars."
+      }
+    ],
+    "hints": [
+      "Water above a bar is bounded by min(max-left, max-right) minus its height.",
+      "Two pointers with running left/right maxima avoid extra arrays."
+    ],
+    "solution": {
+      "code": "import sys\n\nheights = list(map(int, sys.stdin.read().split()))\ni, j = 0, len(heights) - 1\nleft_max = right_max = 0\nwater = 0\nwhile i < j:\n    if heights[i] < heights[j]:\n        left_max = max(left_max, heights[i])\n        water += left_max - heights[i]\n        i += 1\n    else:\n        right_max = max(right_max, heights[j])\n        water += right_max - heights[j]\n        j -= 1\nprint(water)",
+      "explanation": "Advance the side with the lower wall; its running maximum already bounds the water there.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(1)"
+    },
+    "tags": [
+      "arrays",
+      "two-pointers"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "dsa",
     "subcategory": "sliding_window",
     "difficulty": "hard",
     "title": "Minimum Window Substring",
-    "description": "Given two strings `s` and `t`, return the minimum window substring of `s` that contains all characters of `t` (including duplicates).\n\nIf no such window exists, return `\"\"`.",
-    "constraints": "1 ≤ len(s), len(t) ≤ 10^5. s and t consist of uppercase and lowercase English letters.",
+    "description": "Find the smallest window of `s` that contains every character of `t`\n(with multiplicity).\n\n**Input**: line 1 \u2014 `s`; line 2 \u2014 `t`.\n\n**Output**: the minimum window, or `NONE` if it does not exist.",
+    "constraints": "1 <= len(s), len(t) <= 10^5; the answer is unique when it exists",
     "examples": [
-      {"input": "s = 'ADOBECODEBANC', t = 'ABC'", "output": "'BANC'", "explanation": "The minimum window containing A, B, C is 'BANC'."}
+      {
+        "input": "ADOBECODEBANC\nABC",
+        "output": "BANC",
+        "explanation": "BANC is the smallest window containing A, B and C."
+      },
+      {
+        "input": "a\naa",
+        "output": "NONE",
+        "explanation": "s has only one 'a'."
+      }
     ],
     "hints": [
-      "Use two frequency maps: one for t, one for the current window.",
-      "Expand window to the right until all characters are covered.",
-      "Then shrink from the left to find the minimum valid window."
+      "Expand right until the window covers t, then shrink left as far as possible.",
+      "Track how many required characters are still missing."
     ],
-    "solution": {"code": "from collections import Counter\n\ndef min_window(s, t):\n    if not t or not s:\n        return ''\n    need = Counter(t)\n    have = {}\n    formed = 0\n    required = len(need)\n    left = 0\n    result = (float('inf'), 0, 0)\n\n    for right, char in enumerate(s):\n        have[char] = have.get(char, 0) + 1\n        if char in need and have[char] == need[char]:\n            formed += 1\n        while formed == required:\n            window_len = right - left + 1\n            if window_len < result[0]:\n                result = (window_len, left, right)\n            left_char = s[left]\n            have[left_char] -= 1\n            if left_char in need and have[left_char] < need[left_char]:\n                formed -= 1\n            left += 1\n\n    return '' if result[0] == float('inf') else s[result[1]:result[2]+1]", "explanation": "Classic sliding window with two pointers. We expand right to cover all of t, then shrink left to minimize. 'formed' tracks how many characters from t are fully covered.", "time_complexity": "O(|s| + |t|)", "space_complexity": "O(|s| + |t|)"},
-    "tags": ["sliding-window", "hash-map", "string", "classic"]
+    "solution": {
+      "code": "import sys\nfrom collections import Counter\n\nlines = sys.stdin.read().splitlines()\ns, t = lines[0], lines[1]\n\nneed = Counter(t)\nmissing = len(t)\nbest = (float(\"inf\"), 0, 0)\nleft = 0\nfor right, ch in enumerate(s, 1):\n    if need[ch] > 0:\n        missing -= 1\n    need[ch] -= 1\n    if missing == 0:\n        while need[s[left]] < 0:\n            need[s[left]] += 1\n            left += 1\n        if right - left < best[0]:\n            best = (right - left, left, right)\n        need[s[left]] += 1\n        missing += 1\n        left += 1\nprint(s[best[1]:best[2]] if best[0] != float(\"inf\") else \"NONE\")",
+      "explanation": "A counting window: grow to cover t, shrink to minimality, record, and release one char.",
+      "time_complexity": "O(len(s) + len(t))",
+      "space_complexity": "O(alphabet)"
+    },
+    "tags": [
+      "strings",
+      "sliding-window"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "binary_search",
+    "difficulty": "hard",
+    "title": "Split Array Largest Sum",
+    "description": "Split the array into `k` non-empty contiguous parts minimizing the largest\npart sum. Binary-search the answer.\n\n**Input**: line 1 \u2014 the non-negative integers; line 2 \u2014 `k`.\n\n**Output**: the minimized largest sum.",
+    "constraints": "1 <= k <= n <= 10^4",
+    "examples": [
+      {
+        "input": "7 2 5 10 8\n2",
+        "output": "18",
+        "explanation": "[7,2,5] and [10,8] \u2014 the larger sums to 18."
+      },
+      {
+        "input": "1 2 3 4 5\n2",
+        "output": "9",
+        "explanation": "[1,2,3] and [4,5]."
+      }
+    ],
+    "hints": [
+      "Binary search the answer between max(nums) and sum(nums).",
+      "Greedily check whether a candidate cap fits within k parts."
+    ],
+    "solution": {
+      "code": "import sys\n\nlines = sys.stdin.read().splitlines()\nnums = list(map(int, lines[0].split()))\nk = int(lines[1])\n\ndef parts_needed(cap):\n    parts, current = 1, 0\n    for x in nums:\n        if current + x > cap:\n            parts += 1\n            current = 0\n        current += x\n    return parts\n\nlo, hi = max(nums), sum(nums)\nwhile lo < hi:\n    mid = (lo + hi) // 2\n    if parts_needed(mid) <= k:\n        hi = mid\n    else:\n        lo = mid + 1\nprint(lo)",
+      "explanation": "Binary search on the answer with a greedy feasibility check.",
+      "time_complexity": "O(n log(sum))",
+      "space_complexity": "O(1)"
+    },
+    "tags": [
+      "arrays",
+      "binary-search"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "bfs",
+    "difficulty": "hard",
+    "title": "Word Ladder",
+    "description": "Transform `begin` into `end` one letter at a time; every intermediate word\nmust be in the dictionary. Output the length of the shortest chain\n(counting both endpoints).\n\n**Input**: line 1 \u2014 `begin`; line 2 \u2014 `end`; line 3 \u2014 the dictionary words,\nspace-separated.\n\n**Output**: the chain length, or `0` if no chain exists.",
+    "constraints": "All words share one length <= 10; dictionary <= 5000 words",
+    "examples": [
+      {
+        "input": "hit\ncog\nhot dot dog lot log cog",
+        "output": "5",
+        "explanation": "hit -> hot -> dot -> dog -> cog."
+      },
+      {
+        "input": "hit\ncog\nhot dot dog lot log",
+        "output": "0",
+        "explanation": "cog is not in the dictionary."
+      }
+    ],
+    "hints": [
+      "BFS over words; neighbors differ by one letter.",
+      "Precompute wildcard buckets like h*t to find neighbors quickly."
+    ],
+    "solution": {
+      "code": "import sys\nfrom collections import defaultdict, deque\n\nlines = sys.stdin.read().splitlines()\nbegin, end = lines[0], lines[1]\nwords = set(lines[2].split())\n\nif end not in words:\n    print(0)\nelse:\n    buckets = defaultdict(list)\n    for word in words | {begin}:\n        for i in range(len(word)):\n            buckets[word[:i] + \"*\" + word[i + 1:]].append(word)\n\n    queue = deque([(begin, 1)])\n    seen = {begin}\n    answer = 0\n    while queue:\n        word, dist = queue.popleft()\n        if word == end:\n            answer = dist\n            break\n        for i in range(len(word)):\n            for nxt in buckets[word[:i] + \"*\" + word[i + 1:]]:\n                if nxt not in seen:\n                    seen.add(nxt)\n                    queue.append((nxt, dist + 1))\n    print(answer)",
+      "explanation": "Shortest path in an implicit graph; wildcard buckets give O(L) neighbor lookup.",
+      "time_complexity": "O(N * L^2)",
+      "space_complexity": "O(N * L)"
+    },
+    "tags": [
+      "graphs",
+      "bfs",
+      "strings"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "dfs",
+    "difficulty": "hard",
+    "title": "Longest Increasing Path in a Matrix",
+    "description": "Find the length of the longest strictly increasing path in a matrix, moving\nup, down, left or right.\n\n**Input**: line 1 \u2014 `rows cols`; next `rows` lines \u2014 the matrix values.\n\n**Output**: the longest path length.",
+    "constraints": "1 <= rows, cols <= 200",
+    "examples": [
+      {
+        "input": "3 3\n9 9 4\n6 6 8\n2 1 1",
+        "output": "4",
+        "explanation": "1 -> 2 -> 6 -> 9."
+      },
+      {
+        "input": "3 3\n3 4 5\n3 2 6\n2 2 1",
+        "output": "4",
+        "explanation": "3 -> 4 -> 5 -> 6."
+      }
+    ],
+    "hints": [
+      "DFS from every cell with memoization \u2014 each cell's answer is computed once."
+    ],
+    "solution": {
+      "code": "import sys\nfrom functools import lru_cache\n\nsys.setrecursionlimit(100000)\nlines = sys.stdin.read().splitlines()\nrows, cols = map(int, lines[0].split())\ngrid = [list(map(int, lines[1 + r].split())) for r in range(rows)]\n\n@lru_cache(maxsize=None)\ndef longest(r, c):\n    best = 1\n    for dr, dc in ((1, 0), (-1, 0), (0, 1), (0, -1)):\n        nr, nc = r + dr, c + dc\n        if 0 <= nr < rows and 0 <= nc < cols and grid[nr][nc] > grid[r][c]:\n            best = max(best, 1 + longest(nr, nc))\n    return best\n\nprint(max(longest(r, c) for r in range(rows) for c in range(cols)))",
+      "explanation": "Memoized DFS turns an exponential search into one visit per cell.",
+      "time_complexity": "O(rows * cols)",
+      "space_complexity": "O(rows * cols)"
+    },
+    "tags": [
+      "grid",
+      "dfs",
+      "memoization"
+    ]
   },
   {
     "source": "static",
     "category": "dsa",
     "subcategory": "dynamic_programming",
     "difficulty": "hard",
-    "title": "Longest Increasing Subsequence",
-    "description": "Given an integer array `nums`, return the length of the longest strictly increasing subsequence.\n\nA subsequence is derived from the array by deleting some or no elements without changing the order of remaining elements.\n\nImplement the O(n log n) solution using binary search.",
-    "constraints": "1 ≤ len(nums) ≤ 2500. -10^4 ≤ nums[i] ≤ 10^4.",
+    "title": "Edit Distance",
+    "description": "Compute the minimum number of single-character insertions, deletions and\nsubstitutions to turn one word into another.\n\n**Input**: line 1 \u2014 the source word; line 2 \u2014 the target word.\n\n**Output**: the minimum edit distance.",
+    "constraints": "1 <= len <= 500 each",
     "examples": [
-      {"input": "nums = [10,9,2,5,3,7,101,18]", "output": "4", "explanation": "The LIS is [2,3,7,101] or [2,5,7,101]."}
+      {
+        "input": "horse\nros",
+        "output": "3",
+        "explanation": "horse -> rorse -> rose -> ros."
+      },
+      {
+        "input": "intention\nexecution",
+        "output": "5",
+        "explanation": "The classic example."
+      }
     ],
     "hints": [
-      "The O(n²) DP approach: dp[i] = length of LIS ending at index i.",
-      "For O(n log n): maintain a 'tails' array where tails[i] is the smallest tail of all increasing subsequences of length i+1.",
-      "Use bisect_left to find where to place each number in tails."
+      "dp[i][j] = distance between the first i chars of a and first j of b.",
+      "One row at a time is enough."
     ],
-    "solution": {"code": "from bisect import bisect_left\n\ndef length_of_lis(nums):\n    tails = []\n    for num in nums:\n        pos = bisect_left(tails, num)\n        if pos == len(tails):\n            tails.append(num)\n        else:\n            tails[pos] = num\n    return len(tails)", "explanation": "tails[i] stores the smallest possible tail of an increasing subsequence of length i+1. For each number, we either extend the longest subsequence or replace an element to keep tails optimal. Binary search gives O(n log n).", "time_complexity": "O(n log n)", "space_complexity": "O(n)"},
-    "tags": ["dp", "binary-search", "patience-sorting", "classic"]
+    "solution": {
+      "code": "import sys\n\nlines = sys.stdin.read().splitlines()\na, b = lines[0], lines[1]\n\nprevious = list(range(len(b) + 1))\nfor i, ca in enumerate(a, 1):\n    current = [i] + [0] * len(b)\n    for j, cb in enumerate(b, 1):\n        if ca == cb:\n            current[j] = previous[j - 1]\n        else:\n            current[j] = 1 + min(previous[j - 1], previous[j], current[j - 1])\n    previous = current\nprint(previous[len(b)])",
+      "explanation": "Classic Levenshtein DP with a rolling row.",
+      "time_complexity": "O(len(a) * len(b))",
+      "space_complexity": "O(len(b))"
+    },
+    "tags": [
+      "strings",
+      "dp"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "heap",
+    "difficulty": "hard",
+    "title": "Running Median",
+    "description": "After each integer arrives, output the median of everything seen so far.\nMaintain two heaps: a max-heap of the lower half and a min-heap of the\nupper half.\n\n**Input**: the integers, space-separated, on one line.\n\n**Output**: the running medians, space-separated. Print whole-number\nmedians without a decimal point (e.g. `2`, not `2.0`) and half values\nas `x.5`.",
+    "constraints": "1 <= n <= 10^5",
+    "examples": [
+      {
+        "input": "2 1 5 7 2 0 5",
+        "output": "2 1.5 2 3.5 2 2 2",
+        "explanation": "Medians of each growing prefix."
+      },
+      {
+        "input": "1 2",
+        "output": "1 1.5",
+        "explanation": "After 1: median 1; after 1,2: median 1.5."
+      }
+    ],
+    "hints": [
+      "Balance the heaps so their sizes differ by at most one.",
+      "Python's heapq is a min-heap \u2014 store negatives for the max-heap."
+    ],
+    "solution": {
+      "code": "import heapq\nimport sys\n\nlow, high = [], []  # max-heap (negated), min-heap\nout = []\nfor x in map(int, sys.stdin.read().split()):\n    heapq.heappush(low, -x)\n    heapq.heappush(high, -heapq.heappop(low))\n    if len(high) > len(low):\n        heapq.heappush(low, -heapq.heappop(high))\n    if len(low) > len(high):\n        median = -low[0]\n        out.append(str(median))\n    else:\n        median = (-low[0] + high[0]) / 2\n        out.append(str(int(median)) if median == int(median) else str(median))\nprint(\" \".join(out))",
+      "explanation": "Two balanced heaps expose the middle element(s) in O(log n) per insert.",
+      "time_complexity": "O(n log n)",
+      "space_complexity": "O(n)"
+    },
+    "tags": [
+      "heap",
+      "streaming"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "prefix_sum",
+    "difficulty": "hard",
+    "title": "Subarrays Divisible by K",
+    "description": "Count contiguous subarrays whose sum is divisible by `k`.\n\n**Input**: line 1 \u2014 the integers (may be negative); line 2 \u2014 `k`.\n\n**Output**: the count of qualifying subarrays.",
+    "constraints": "1 <= n <= 3*10^4; 2 <= k <= 10^4",
+    "examples": [
+      {
+        "input": "4 5 0 -2 -3 1\n5",
+        "output": "7",
+        "explanation": "Seven subarrays sum to a multiple of 5."
+      },
+      {
+        "input": "5\n9",
+        "output": "0",
+        "explanation": "5 alone is not divisible by 9."
+      }
+    ],
+    "hints": [
+      "Two prefixes with equal remainder mod k bound a divisible subarray.",
+      "Python's % already returns non-negative remainders."
+    ],
+    "solution": {
+      "code": "import sys\nfrom collections import defaultdict\n\nlines = sys.stdin.read().splitlines()\nnums = list(map(int, lines[0].split()))\nk = int(lines[1])\n\nremainder_counts = defaultdict(int)\nremainder_counts[0] = 1\nrunning = 0\ncount = 0\nfor x in nums:\n    running = (running + x) % k\n    count += remainder_counts[running]\n    remainder_counts[running] += 1\nprint(count)",
+      "explanation": "Count pairs of equal prefix remainders; each pair is one divisible subarray.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(k)"
+    },
+    "tags": [
+      "arrays",
+      "prefix-sum",
+      "math"
+    ]
   },
   {
     "source": "static",
     "category": "dsa",
     "subcategory": "monotonic_stack",
     "difficulty": "hard",
-    "title": "Largest Rectangle in Histogram",
-    "description": "Given an array of integers `heights` representing a histogram where the width of each bar is 1, find the area of the largest rectangle that can be formed in the histogram.",
-    "constraints": "1 ≤ len(heights) ≤ 10^5. 0 ≤ heights[i] ≤ 10^4.",
+    "title": "Largest Rectangle in a Histogram",
+    "description": "Find the largest rectangle that fits under a histogram.\n\n**Input**: the bar heights, space-separated, on one line.\n\n**Output**: the maximum rectangle area.",
+    "constraints": "1 <= n <= 10^5; 0 <= height <= 10^4",
     "examples": [
-      {"input": "heights = [2,1,5,6,2,3]", "output": "10", "explanation": "Rectangle of height 5 spanning indices 2-3 has area 5×2 = 10."}
+      {
+        "input": "2 1 5 6 2 3",
+        "output": "10",
+        "explanation": "Bars 5 and 6 form a 5x2 rectangle."
+      },
+      {
+        "input": "2 4",
+        "output": "4",
+        "explanation": "Either 2x2 or 4x1."
+      }
     ],
     "hints": [
-      "Use a monotonic increasing stack that stores indices.",
-      "When you encounter a bar shorter than the top of the stack, pop and calculate area.",
-      "The width extends from the previous stack element to the current index."
+      "When a bar shorter than the stack top arrives, the popped bar's rectangle is fully determined.",
+      "A trailing sentinel height of 0 flushes the stack."
     ],
-    "solution": {"code": "def largest_rectangle(heights):\n    stack = []  # stores indices\n    max_area = 0\n    heights.append(0)  # sentinel to flush remaining bars\n\n    for i, h in enumerate(heights):\n        while stack and heights[stack[-1]] > h:\n            height = heights[stack.pop()]\n            width = i if not stack else i - stack[-1] - 1\n            max_area = max(max_area, height * width)\n        stack.append(i)\n\n    heights.pop()  # restore input\n    return max_area", "explanation": "The monotonic stack maintains bars in increasing order. When a shorter bar appears, we pop taller bars and compute their maximum rectangle. The sentinel (0) at the end forces all remaining bars to be processed.", "time_complexity": "O(n)", "space_complexity": "O(n)"},
-    "tags": ["monotonic-stack", "histogram", "classic"]
+    "solution": {
+      "code": "import sys\n\nheights = list(map(int, sys.stdin.read().split()))\nheights.append(0)  # sentinel flushes the stack\nstack = [-1]  # index sentinel\nbest = 0\nfor i, h in enumerate(heights):\n    while stack[-1] != -1 and heights[stack[-1]] >= h:\n        height = heights[stack.pop()]\n        width = i - stack[-1] - 1\n        best = max(best, height * width)\n    stack.append(i)\nprint(best)",
+      "explanation": "An increasing stack: each pop fixes a bar's maximal width in O(1) amortized.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)"
+    },
+    "tags": [
+      "stack",
+      "monotonic-stack"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "union_find",
+    "difficulty": "hard",
+    "title": "Most Stones Removed",
+    "description": "Stones sit on integer grid points. You may remove a stone if another stone\nshares its row or column. Maximize removals: every connected group of\nstones (via shared rows/columns) can be reduced to a single stone.\n\n**Input**: line 1 \u2014 the stone count `n`; next `n` lines \u2014 one stone `x y`.\n\n**Output**: the maximum number of stones you can remove.",
+    "constraints": "1 <= n <= 1000; 0 <= x, y <= 10^4",
+    "examples": [
+      {
+        "input": "6\n0 0\n0 1\n1 0\n1 2\n2 1\n2 2",
+        "output": "5",
+        "explanation": "All six stones are connected \u2014 one must stay."
+      },
+      {
+        "input": "5\n0 0\n0 2\n1 1\n2 0\n2 2",
+        "output": "3",
+        "explanation": "Two groups: the corners and the center stone."
+      }
+    ],
+    "hints": [
+      "Union each stone's row node with its column node \u2014 stones sharing either merge.",
+      "Answer = stones \u2212 number of components."
+    ],
+    "solution": {
+      "code": "import sys\n\nlines = sys.stdin.read().splitlines()\nn = int(lines[0])\nparent = {}\n\ndef find(x):\n    parent.setdefault(x, x)\n    while parent[x] != x:\n        parent[x] = parent[parent[x]]\n        x = parent[x]\n    return x\n\ndef union(a, b):\n    ra, rb = find(a), find(b)\n    if ra != rb:\n        parent[ra] = rb\n\nfor i in range(1, n + 1):\n    x, y = map(int, lines[i].split())\n    union((\"row\", x), (\"col\", y))\n\ncomponents = {find(node) for node in parent}\nprint(n - len(components))",
+      "explanation": "Model rows and columns as union-find nodes; each component keeps exactly one stone.",
+      "time_complexity": "O(n \u03b1(n))",
+      "space_complexity": "O(n)"
+    },
+    "tags": [
+      "graphs",
+      "union-find"
+    ]
   }
 ]
