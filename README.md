@@ -1,8 +1,13 @@
 # ⬡ CodePractice
 
-**AI-Powered Adaptive Coding Practice Platform**
+**An adaptive, AI-powered coding practice platform for your terminal.**
 
-A beautiful, interactive terminal application that helps developers master Python, crush DSA patterns, and prepare for technical interviews — powered by your local LLM.
+[![CI](https://github.com/flkapes/job-search-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/flkapes/job-search-cli/actions/workflows/ci.yml)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-0.2.0-informational.svg)](CHANGELOG.md)
+
+CodePractice is an interactive terminal application for technical interview preparation. Drill Python fundamentals and DSA patterns, practice in **Python, JavaScript, or Go** with verified test cases, and get AI-driven evaluation and coaching — using a local LLM by default, or a cloud API if you prefer.
 
 ```
    ██████╗ ██████╗ ██████╗ ███████╗
@@ -13,6 +18,8 @@ A beautiful, interactive terminal application that helps developers master Pytho
    ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝
          P R A C T I C E
 ```
+
+[Features](#-features) · [Quick Start](#-quick-start) · [Configuration](#%EF%B8%8F-configuration) · [Roadmap](ROADMAP.md) · [Changelog](CHANGELOG.md)
 
 ---
 
@@ -102,7 +109,10 @@ Solve problems in **Python, JavaScript, or Go** (selector appears for installed 
 
 ### Prerequisites
 - Python 3.11+
-- [Ollama](https://ollama.com/) running locally (or LM Studio)
+- An LLM backend — any one of:
+  - [Ollama](https://ollama.com/) or [LM Studio](https://lmstudio.ai/) running locally (default, fully private), or
+  - an Anthropic or OpenAI-compatible API key (see [Configuration](#%EF%B8%8F-configuration))
+- Optional: [Node.js](https://nodejs.org/) and/or [Go](https://go.dev/) to practice in JavaScript or Go
 
 ### Install
 
@@ -157,7 +167,7 @@ cp .env.example .env
 ```
 
 ```env
-# LLM Backend: "ollama" or "lmstudio"
+# LLM Backend: "ollama" | "lmstudio" (local) | "anthropic" | "openai" (cloud)
 LLM_BACKEND=ollama
 
 # Ollama
@@ -186,9 +196,9 @@ LMSTUDIO_MODEL=local-model
 
 | Key | Action |
 |-----|--------|
-| `d` | Dashboard |
+| `d` | Dashboard (Interview Sim lives in its Quick Start row) |
 | `p` | Free Practice |
-| `d` → Dashboard Quick Action | Interview Simulation entry |
+| `r` | Review session (spaced repetition) |
 | `t` | Python Track |
 | `a` | DSA Training |
 | `l` | Learning Plan |
@@ -196,8 +206,11 @@ LMSTUDIO_MODEL=local-model
 | `s` | Profile & Settings |
 | `h` | Show hint (in practice) |
 | `n` | Next problem (in practice) |
+| `b` | Bookmark problem (in practice) |
 | `Ctrl+Enter` | Submit code |
 | `q` | Quit |
+
+Screens without a shortcut — **Companies**, **My Library**, **New Problem**, **Resume Drill**, **Job Description**, and **Progress** — are reachable from the sidebar.
 
 ---
 
@@ -210,21 +223,25 @@ codepractice/
 ├── data/                # Bundled problems + company profiles
 ├── tui/
 │   ├── app.py           # Root Textual app, screen router
-│   ├── theme.tcss       # Claude-inspired dark theme
-│   ├── screens/         # Dashboard, Practice, DSA, Chat, etc.
+│   ├── theme.tcss       # GitHub-dark theme
+│   ├── screens/         # Dashboard, Practice, Library, Companies, Chat, …
 │   └── widgets/         # Header, Sidebar, CodeEditor, StreamingOutput
 ├── llm/
-│   ├── client.py        # Ollama + LM Studio backends
+│   ├── client.py        # Ollama, LM Studio, Anthropic, OpenAI-compatible
 │   ├── prompts/         # Structured prompt templates
 │   └── services/        # Problem generation, evaluation, planning
 ├── db/
 │   ├── database.py      # SQLite + auto-migrations
 │   ├── migrations/      # Schema versioning
-│   └── repositories/    # Clean data access layer
+│   └── repositories/    # Data access layer
 ├── core/
 │   ├── models.py        # Pydantic data models
 │   ├── difficulty.py    # Adaptive difficulty engine
-│   └── problem_bank.py  # Static problem loader
+│   ├── gamification.py  # XP rules, levels, achievements
+│   ├── spaced_repetition.py  # Review scheduling
+│   ├── company_profiles.py   # Company prep data + plan builder
+│   ├── custom_problems.py    # Custom problem authoring + import/export
+│   └── problem_bank.py  # Bundled problem loader
 └── utils/
     ├── code_runner.py   # Multi-language execution + test verification
     ├── languages.py     # Python / JavaScript / Go runner registry
@@ -245,14 +262,20 @@ codepractice/
 
 ## 🤝 Contributing
 
-1. Fork the repo
-2. Create a feature branch
-3. Install dev deps: `pip install -e ".[dev]"`
-4. Run tests: `pytest`
-5. Submit a PR
+1. Fork the repo and create a feature branch
+2. Install dev dependencies: `pip install -e ".[dev]"`
+3. Make your changes, with tests
+4. Verify locally — the same checks run in CI:
+   ```bash
+   ruff check codepractice/
+   pytest --cov=codepractice --cov-fail-under=40
+   ```
+5. Open a pull request
+
+Planned work lives in [ROADMAP.md](ROADMAP.md); the current implementation queue is in [NEXT_SPRINT.md](NEXT_SPRINT.md).
 
 ---
 
 ## 📄 License
 
-MIT License — see [LICENSE](LICENSE) for details.
+Released under the [MIT License](LICENSE).

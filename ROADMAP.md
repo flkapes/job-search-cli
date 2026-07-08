@@ -2,8 +2,10 @@
 
 Features planned for future iterations, roughly ordered by impact.
 
-> **Source of truth:** This roadmap is aspirational and may include ideas not yet
-> released. For shipped capabilities, rely on `README.md` and in-app commands.
+> **Where things live:** this roadmap is the long-range plan and may include
+> ideas not yet released. [`NEXT_SPRINT.md`](NEXT_SPRINT.md) is the actionable
+> queue, [`CHANGELOG.md`](CHANGELOG.md) records what has shipped, and
+> [`README.md`](README.md) documents current capabilities.
 
 ---
 
@@ -65,7 +67,7 @@ Features planned for future iterations, roughly ordered by impact.
   API keys env-only; local-first remains the default.
 
 ### ✅ Implemented — Company-Specific Prep Profiles (2026-07-08)
-- `data/companies.json` (10 companies), searchable browser, one-click
+- Bundled profiles for 10 companies, searchable browser, one-click
   targeted plan (LLM or deterministic fallback), JD-flow enrichment.
 
 ### ✅ Implemented — Custom Problem Creation (2026-07-08)
@@ -75,8 +77,6 @@ Features planned for future iterations, roughly ordered by impact.
 ### ✅ Implemented — Multi-Language Practice (2026-07-08)
 - JavaScript and Go runners with verified test cases, language selector +
   per-language highlighting, per-attempt language tracking.
-
----
 
 ### ✅ Implemented — Code-Runner Resource Limits (2026-07-08)
 - Submitted code runs under POSIX rlimits: CPU time, address space
@@ -148,7 +148,8 @@ The repo is called *job-search-cli* — close the loop from practice to search.
 - Turns the app from "interview prep" into an end-to-end job-search companion
 
 ### Distribution & Release Engineering
-- Publish to PyPI (`pipx install codepractice`), versioned releases + changelog
+- Publish to PyPI (`pipx install codepractice`) — packaging, versioning,
+  changelog, and license shipped in 0.2.0; the upload pipeline remains
 - Ratchet CI coverage gate up from 40% toward 70%
 - Screenshots/asciinema demo in README for discoverability
 

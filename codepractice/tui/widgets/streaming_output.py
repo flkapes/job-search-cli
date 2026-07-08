@@ -1,14 +1,12 @@
 """Real-time LLM token streaming display widget.
 
-Rendering approach modeled on Claude Code's fullscreen renderer:
-
-- Textual already draws on the alternate screen buffer and wraps frames in
-  synchronized-output mode (DEC 2026) where the terminal supports it, so the
-  terminal only repaints complete frames.
-- What this widget adds is the app-level half: tokens are consumed on a
-  background worker thread (the UI thread never blocks on the LLM), writes
-  are coalesced into frame-sized batches instead of per-token updates, and
-  auto-follow pauses when the user scrolls up and resumes at the bottom.
+Flicker-free rendering rests on two halves. Textual provides the terminal
+half: it draws on the alternate screen buffer and wraps frames in
+synchronized-output mode (DEC 2026) where supported, so the terminal only
+repaints complete frames. This widget provides the application half: tokens
+are consumed on a background worker thread (the UI thread never blocks on
+the LLM), writes are coalesced into frame-sized batches instead of per-token
+updates, and auto-follow pauses while the user scrolls up.
 """
 
 from __future__ import annotations
@@ -116,7 +114,7 @@ class StreamingOutput(Widget):
 
     def _append(self, text: str) -> None:
         """Write a batch with auto-follow: stay pinned to the bottom only if
-        the user hasn't scrolled up (Claude Code's auto-follow behavior)."""
+        the user hasn't scrolled up to read earlier output."""
         log = self.log
         follow = bool(getattr(log, "is_vertical_scroll_end", True))
         log.write(text, scroll_end=follow)
