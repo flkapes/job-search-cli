@@ -78,13 +78,18 @@ Features planned for future iterations, roughly ordered by impact.
 
 ---
 
+### ✅ Implemented — Code-Runner Resource Limits (2026-07-08)
+- Submitted code runs under POSIX rlimits: CPU time, address space
+  (language-aware), max written file size, no core dumps.
+
+---
+
 ## Near-Term
 
-### Code-Runner Sandbox Hardening
-Execution is a plain subprocess with the local toolchain — fine for
-self-authored code, insufficient now that problems can be imported.
-- Resource limits (memory, CPU, process count), no-network execution
-- Restricted filesystem visibility for the child process
+### Full Sandbox Isolation
+Resource limits shipped; true isolation is still open.
+- No-network execution and restricted filesystem visibility
+  (namespaces/seccomp on Linux, sandbox-exec on macOS)
 
 ---
 

@@ -94,7 +94,7 @@ Solve problems in **Python, JavaScript, or Go** (selector appears for installed 
 | Data Models | [Pydantic](https://docs.pydantic.dev/) v2 — typed, validated models |
 | CLI | [Typer](https://typer.tiangolo.com/) — modern CLI framework |
 | Database | SQLite — zero-config persistent storage |
-| Code Execution | Sandboxed subprocess — safe Python execution |
+| Code Execution | Subprocess with POSIX resource limits (CPU, memory, file size) |
 
 ---
 
@@ -207,6 +207,7 @@ LMSTUDIO_MODEL=local-model
 codepractice/
 ├── main.py              # CLI entry point (Typer)
 ├── config.py            # Configuration, theme palette
+├── data/                # Bundled problems + company profiles
 ├── tui/
 │   ├── app.py           # Root Textual app, screen router
 │   ├── theme.tcss       # Claude-inspired dark theme
@@ -225,7 +226,9 @@ codepractice/
 │   ├── difficulty.py    # Adaptive difficulty engine
 │   └── problem_bank.py  # Static problem loader
 └── utils/
-    ├── code_runner.py   # Sandboxed Python execution
+    ├── code_runner.py   # Multi-language execution + test verification
+    ├── languages.py     # Python / JavaScript / Go runner registry
+    ├── sandbox.py       # POSIX resource limits for submitted code
     └── text_utils.py    # Formatting helpers
 ```
 

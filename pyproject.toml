@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "codepractice"
-version = "0.1.0"
+version = "0.2.0"
 description = "An adaptive, AI-powered CLI coding practice platform"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -46,6 +46,10 @@ dev = [
     "ruff>=0.2.0",
 ]
 
+[project.urls]
+Repository = "https://github.com/flkapes/job-search-cli"
+Changelog = "https://github.com/flkapes/job-search-cli/blob/main/CHANGELOG.md"
+
 [project.scripts]
 codepractice = "codepractice.main:app"
 
@@ -54,8 +58,13 @@ where = ["."]
 include = ["codepractice*"]
 
 [tool.setuptools.package-data]
-codepractice = ["tui/*.tcss", "tui/**/*.tcss"]
-"*" = ["data/problems/*.json", "data/companies.json"]
+codepractice = [
+    "tui/*.tcss",
+    "tui/**/*.tcss",
+    "data/*.json",
+    "data/problems/*.json",
+    "db/migrations/*.sql",
+]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

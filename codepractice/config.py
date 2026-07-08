@@ -18,8 +18,8 @@ DB_PATH = DATA_DIR / "codepractice.db"
 EXPORTS_DIR = DATA_DIR / "exports"
 EXPORTS_DIR.mkdir(exist_ok=True)
 
-# Static problem data bundled with the package
-_PACKAGE_DIR = Path(__file__).parent.parent
+# Static data bundled inside the package so installed wheels ship it too
+_PACKAGE_DIR = Path(__file__).parent
 PROBLEMS_DATA_DIR = _PACKAGE_DIR / "data" / "problems"
 COMPANIES_DATA_FILE = _PACKAGE_DIR / "data" / "companies.json"
 
