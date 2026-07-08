@@ -190,6 +190,7 @@ class ProblemAttempt(BaseModel):
     time_spent_sec: int = 0
     hints_used: int = 0
     passed: bool = False
+    language: str = "python"
     attempted_at: datetime = Field(default_factory=datetime.now)
 
 

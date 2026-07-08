@@ -11,13 +11,14 @@ from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.reactive import reactive
 from textual.widget import Widget
-from textual.widgets import Button, Label, Static
+from textual.widgets import Button, Label, Select, Static
 
 from codepractice.core.models import Problem
 from codepractice.core.spaced_repetition import get_due_problems, update_schedule
 from codepractice.tui.widgets.code_editor import CodeEditor
 from codepractice.tui.widgets.problem_card import ProblemCard
 from codepractice.tui.widgets.streaming_output import StreamingOutput
+from codepractice.utils.languages import available_languages
 
 
 class Phase(str, Enum):
@@ -137,6 +138,12 @@ class PracticeContent(Widget):
                 with Horizontal(classes="action-bar"):
                     yield Button("Submit [Ctrl+Enter]", id="btn-submit", classes="primary-btn")
                     yield Button("Back [Esc]", id="btn-back-problem", classes="secondary-btn")
+                    yield Select(
+                        [(spec.name, spec.id) for spec in available_languages()],
+                        value=self._language,
+                        id="language-select",
+                        allow_blank=False,
+                    )
 
         # Phase: Feedback
         with Vertical(id="phase-feedback"):
@@ -295,10 +302,22 @@ class PracticeContent(Widget):
     def on_code_editor_code_submitted(self, event: CodeEditor.CodeSubmitted) -> None:
         self.action_submit_code()
 
+    def on_select_changed(self, event: Select.Changed) -> None:
+        if event.select.id == "language-select" and event.value:
+            self._language = str(event.value)
+            try:
+                self.query_one("#code-editor", CodeEditor).set_language(self._language)
+            except Exception:
+                pass
+
     def _enter_coding(self) -> None:
         self._code_start_time = time.time()
         editor = self.query_one("#code-editor", CodeEditor)
         editor.clear()
+        try:
+            editor.set_language(self._language)
+        except Exception:
+            pass
         self._show_phase("coding")
         editor.query_one("#code-input").focus()
 
@@ -364,6 +383,7 @@ class PracticeContent(Widget):
                     "time_spent_sec": elapsed,
                     "hints_used": self._hints_used,
                     "passed": passed,
+                    "language": self._language,
                 })
                 if passed:
                     self.app.problem_repo.increment_solved(self._problem.id)
