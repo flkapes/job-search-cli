@@ -65,6 +65,13 @@ class PracticeContent(Widget):
         padding: 1;
     }
 
+    /* Stable region for streamed feedback — content scrolls inside instead
+       of the panel growing and relayouting the screen on every line. */
+    PracticeContent #feedback-stream {
+        height: 1fr;
+        max-height: 100%;
+    }
+
     PracticeContent #phase-loading {
         height: 1fr;
         content-align: center middle;
@@ -346,20 +353,36 @@ class PracticeContent(Widget):
             from codepractice.llm.services.answer_evaluator import AnswerEvaluatorService
             evaluator = AnswerEvaluatorService(self.app.llm)
 
-            # Deterministic verification first — authoritative for correctness
-            verification = None
-            try:
-                verification = evaluator.verify(self._problem, code, language=self._language)
-                self._show_test_results(verification)
-            except Exception:
-                pass
+            verification_holder: dict = {"verification": None}
+            problem, language = self._problem, self._language
 
-            full_text = stream.stream_sync(
-                evaluator.stream_evaluation(
-                    self._problem, code, verification=verification, language=self._language
+            def evaluation_stream():
+                # Runs lazily on the streaming worker thread: subprocess-based
+                # verification and LLM tokens both stay off the UI thread.
+                try:
+                    verification = evaluator.verify(problem, code, language=language)
+                    verification_holder["verification"] = verification
+                    self.app.call_from_thread(self._show_test_results, verification)
+                except Exception:
+                    verification = None
+                yield from evaluator.stream_evaluation(
+                    problem, code, verification=verification, language=language
                 )
-            )
 
+            stream.stream_in_worker(
+                evaluation_stream(),
+                on_complete=lambda full_text: self._finish_evaluation(
+                    full_text, verification_holder["verification"], code, elapsed
+                ),
+                on_error=lambda e: stream.show_error(f"Evaluation failed: {e}"),
+            )
+        except Exception as e:
+            stream.show_error(f"Evaluation failed: {e}")
+
+    def _finish_evaluation(self, full_text: str, verification, code: str, elapsed: int) -> None:
+        """Post-stream bookkeeping — runs on the UI thread once tokens finish."""
+        stream = self.query_one("#feedback-stream", StreamingOutput)
+        try:
             # Parse score from response and record attempt
             from codepractice.llm.client import extract_json
             score_data = extract_json(full_text.split("\n")[-1]) if full_text else None

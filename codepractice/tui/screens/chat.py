@@ -50,8 +50,10 @@ class ChatContent(Widget):
         background: #0d1117;
     }
 
+    /* Bottom-anchored composer: the streaming panel and input live in one
+       docked block, so the input never moves while tokens stream in. */
     ChatContent #chat-input-bar {
-        height: 3;
+        height: auto;
         dock: bottom;
         padding: 0 1;
         background: #161b22;
@@ -60,6 +62,14 @@ class ChatContent(Widget):
 
     ChatContent #chat-input {
         width: 1fr;
+    }
+
+    /* Fixed height while visible — content scrolls inside instead of the
+       panel growing and forcing a relayout on every streamed line. */
+    ChatContent #chat-stream {
+        height: 12;
+        min-height: 12;
+        display: none;
     }
     """
 
@@ -81,9 +91,8 @@ class ChatContent(Widget):
                 id="chat-welcome",
             )
 
-        yield StreamingOutput(id="chat-stream")
-
         with Vertical(id="chat-input-bar"):
+            yield StreamingOutput(id="chat-stream")
             yield Input(
                 placeholder="Ask anything... (Enter to send)",
                 id="chat-input",
@@ -121,9 +130,11 @@ class ChatContent(Widget):
         container = self.query_one("#chat-messages", VerticalScroll)
         self.query_one("#chat-welcome", Static).display = False
         container.mount(ChatMessage(f"[bold]You:[/bold] {text}", classes="user-msg"))
+        container.scroll_end(animate=False)
 
-        # Stream AI response
+        # Stream AI response in the bottom-anchored panel
         stream = self.query_one("#chat-stream", StreamingOutput)
+        stream.display = True
         stream.clear()
 
         try:
@@ -149,22 +160,34 @@ class ChatContent(Widget):
             perf = f"Total solved: {stats['total_solved']}, Avg: {stats['avg_score']}%, Streak: {stats['active_days_30']}d"
 
             chat_service = ChatService(self.app.llm, self.app.chat_repo)
-            full_response = stream.stream_sync(
-                chat_service.stream_response(text, profile, active_plan, perf)
+            # Tokens are consumed on a worker thread — the UI keeps painting
+            # and the input stays anchored and responsive while streaming.
+            stream.stream_in_worker(
+                chat_service.stream_response(text, profile, active_plan, perf),
+                on_complete=self._on_response_complete,
+                on_error=lambda e: stream.show_error(f"Chat error: {e}"),
             )
+        except Exception as e:
+            stream.show_error(f"Chat error: {e}")
 
-            # Add response as a bubble too
+    def _on_response_complete(self, full_response: str) -> None:
+        """Move the finished response into the transcript and hide the stream panel."""
+        try:
             if full_response:
+                container = self.query_one("#chat-messages", VerticalScroll)
                 container.mount(
                     ChatMessage(
                         f"[bold]Coach:[/bold] {full_response[:500]}",
                         classes="assistant-msg",
                     )
                 )
-                stream.clear()
-
-        except Exception as e:
-            stream.show_error(f"Chat error: {e}")
+                container.scroll_end(animate=False)
+            stream = self.query_one("#chat-stream", StreamingOutput)
+            stream.clear()
+            stream.display = False
+            self.query_one("#chat-input", Input).focus()
+        except Exception:
+            pass
 
     def action_clear_chat(self) -> None:
         try:
