@@ -48,72 +48,47 @@ Features planned for future iterations, roughly ordered by impact.
   "Update Goal" action on the Learning Plan screen, and a goal-drift
   panel on the Progress screen.
 
+### ✅ Implemented — Deterministic Test-Case Verification (2026-07-08)
+- Test cases verify actual output vs `expected_output`; guardrails cap/floor
+  LLM scores; offline scoring from real results; per-case results panel.
+
+### ✅ Implemented — Gamification: XP & Achievements (2026-07-08)
+- XP by difficulty × score with speed/no-hint bonuses, 8 level tiers,
+  18 achievements with unlock toasts, Progress-screen gallery + XP chart.
+
+### ✅ Implemented — Problem Bookmarking & My Library (2026-07-08)
+- Star toggle (`B`), filterable library screen, side-by-side comparison of
+  your best solution vs the AI-optimal solution.
+
+### ✅ Implemented — Cloud LLM Backends (2026-07-08)
+- `LLM_BACKEND=anthropic` (official SDK) or `openai`-compatible endpoints;
+  API keys env-only; local-first remains the default.
+
+### ✅ Implemented — Company-Specific Prep Profiles (2026-07-08)
+- `data/companies.json` (10 companies), searchable browser, one-click
+  targeted plan (LLM or deterministic fallback), JD-flow enrichment.
+
+### ✅ Implemented — Custom Problem Creation (2026-07-08)
+- New Problem form, `source='custom'`, inclusion in practice/review,
+  `codepractice export-problems` / `import-problems`.
+
+### ✅ Implemented — Multi-Language Practice (2026-07-08)
+- JavaScript and Go runners with verified test cases, language selector +
+  per-language highlighting, per-attempt language tracking.
+
 ---
 
-## Near-Term — Foundation & Quality
-
-Correctness and reach improvements that de-risk everything below them.
-
-### Deterministic Test-Case Verification
-The evaluation loop today relies on the LLM to judge correctness; the code
-runner executes submissions but never asserts actual output against
-`expected_output`, and when the LLM is offline every submission scores 0.5.
-- Compare captured stdout / return values against `expected_output` per test case
-- Report per-case pass/fail alongside the LLM's qualitative feedback
-- Use deterministic results as the score floor/ceiling (an LLM can't "pass"
-  code that fails its test cases)
-- Prerequisite for fair XP/achievements and trustworthy simulation scorecards
-
-### Cloud LLM Backend Option (Anthropic / OpenAI-compatible)
-The `LLMClient` abstraction already supports pluggable backends; adding an
-API-key backend dramatically widens the audience beyond local-LLM users.
-- `LLM_BACKEND=anthropic` (or any OpenAI-compatible endpoint) via `.env`
-- Local-first remains the default; document the privacy trade-off clearly
-- Better structured-output reliability improves every feature downstream
+## Near-Term
 
 ### Code-Runner Sandbox Hardening
-Current execution is a plain subprocess with the user's interpreter — fine
-for self-authored code, insufficient once custom/shared problems exist.
+Execution is a plain subprocess with the local toolchain — fine for
+self-authored code, insufficient now that problems can be imported.
 - Resource limits (memory, CPU, process count), no-network execution
 - Restricted filesystem visibility for the child process
 
 ---
 
-## Near-Term — Features
-
-### Gamification — XP & Achievements
-Keeps motivation high across long preparation streaks.
-- XP earned per problem solved, scaled by difficulty + score
-- Level thresholds with titles (e.g. "Intern" → "Staff Engineer")
-- 15+ defined achievements:
-  - First Solve, 7-Day Streak, Perfect Score, Speed Demon (< 5 min)
-  - DSA Master (solve all 10 patterns), Pythonista, Plan Finisher, …
-- Toast notification on unlock via Textual's `notify()`
-- Achievement gallery on the Progress screen
-- XP history chart on the Progress screen
-
-### Problem Bookmarking & Solution Library
-Save and revisit favourite problems and solutions. (Promoted from
-Longer-Term: cheap to build on existing notes/replay infrastructure,
-high daily utility.)
-- Bookmark button on every problem card
-- "My Library" screen with bookmarked problems and user solutions
-- Filter by tag, difficulty, category
-- Compare user solution vs AI-optimal solution side-by-side
-
----
-
 ## Medium-Term
-
-### Company-Specific Prep Profiles
-Tailored problem sets for specific employers.
-- `data/companies.json` — FAANG and top-tier companies with:
-  - Common interview patterns (e.g. Amazon = OOP + behavioural, Google = graphs + DP)
-  - Typical round structure and time limits
-  - Difficulty distribution and known focuses
-- Company browser screen with search
-- One-click "Prepare for this company" → creates a targeted learning plan
-- Integrates with Job Description screen for combined prep
 
 ### MCP Job-Search Tool Integration
 Connects the app to live job market data.
@@ -123,14 +98,6 @@ Connects the app to live job market data.
 - **Company intelligence**: `get_company_data` enriches the company prep profile
 - **Resume import**: `get_resume` MCP tool pulls structured resume data into the
   Resume Drill screen, replacing manual paste
-
-### Custom Problem Creation
-Let users define their own drill problems. (Promoted from Longer-Term:
-unlocks sharing and personal drill banks; depends on sandbox hardening.)
-- "New Problem" form in the TUI (title, description, examples, hints, solution)
-- Stored with `source = "custom"` in the DB
-- Included in random problem selection and review queue
-- Export custom problems to JSON for sharing
 
 ### Vim / Emacs Keybindings in Code Editor
 Reduces friction for users who live in modal editors.
@@ -184,12 +151,10 @@ The repo is called *job-search-cli* — close the loop from practice to search.
 
 ## Longer-Term
 
-### Multiple Language Support
-Extend beyond Python to other common interview languages.
-- JavaScript / TypeScript (Node.js runner)
-- Go, Rust, Java stubs
-- Language selector per problem; LLM evaluation adapts to chosen language
-- Syntax highlighting theme per language in the code editor
+### Additional Language Runners
+JavaScript and Go shipped 2026-07-08 — extend the runner registry further.
+- TypeScript (tsx), Rust, and Java adapters
+- Language-specific starter stubs per problem
 
 ### Daily Reminder / Notification System
 Nudges users to keep their streak alive.

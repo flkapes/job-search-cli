@@ -45,6 +45,60 @@ Features currently pending implementation, in rough priority order.
 
 ---
 
+## Sprint completed 2026-07-08 ✅
+
+All seven queued features below shipped:
+
+- ✅ **Deterministic Test-Case Verification** — `run_with_test_cases` compares
+  actual vs expected output; `clamp_score` guardrails (LLM can't pass failing
+  code); offline scoring from real test results; per-case results panel in
+  practice. Tests: `tests/test_code_runner.py`, `tests/test_verification.py`.
+- ✅ **Gamification** — XP rules + 8 levels (`core/gamification.py`), 18
+  achievements with unlock toasts, Level/XP/achievements panels on Progress
+  (migration `010_*.sql`). Tests: `tests/test_gamification.py`.
+- ✅ **Bookmarking & My Library** — star toggle + `B` key, filterable library
+  screen, side-by-side solution comparison (migration `011_*.sql`).
+  Tests: `tests/test_bookmarks.py`.
+- ✅ **Cloud LLM Backends** — `anthropic` (official SDK) and `openai`-compatible
+  backends; keys env-only; wizard + check support. Tests:
+  `tests/test_cloud_backends.py`.
+- ✅ **Company Prep Profiles** — `data/companies.json` (10 companies), browser
+  screen with search + one-click targeted plan (LLM or deterministic
+  fallback), JD-prompt enrichment. Tests: `tests/test_company_profiles.py`.
+- ✅ **Custom Problem Creation** — New Problem form, `source='custom'`,
+  export-problems/import-problems CLI. Tests: `tests/test_custom_problems.py`.
+- ✅ **Multi-Language Practice** — JavaScript + Go runners, language selector,
+  per-attempt language persistence (migration `012_*.sql`), Polyglot
+  achievement. Tests: `tests/test_multi_language.py`.
+
+---
+
+# Next queue (proposed)
+
+## 1. Code-Runner Sandbox Hardening
+
+**Location:** `codepractice/utils/code_runner.py` / `languages.py`
+
+Resource limits (memory/CPU/process count) and no-network execution for
+submitted and imported custom problems.
+
+## 2. AI Mock Interviewer (Big Bet)
+
+**Location:** chat service + interview simulation mode
+
+Conversational interviewer persona: presents the problem, answers clarifying
+questions, probes complexity, scores communication in a post-session rubric.
+
+## 3. Vim / Emacs Keybindings
+
+**Location:** Code editor + settings
+
+Modal editing toggle persisted on the profile.
+
+---
+
+# Completed spec archive (2026-07-08 sprint)
+
 ## 1. Deterministic Test-Case Verification
 
 **Location:** `codepractice/utils/code_runner.py` + answer evaluator + practice flow

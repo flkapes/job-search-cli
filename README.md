@@ -62,6 +62,26 @@ Chat with your AI coding coach. It knows your profile, current plan, recent perf
 - Early finish action + automatic timeout end
 - End-of-session scorecard with attempted/solved, average score, and category breakdown
 
+### ✅ Verified Test Cases
+Submissions run against each problem's examples and the actual output is compared to the expected output. The AI refines the score but can't pass code that fails its test cases — and when the LLM is offline, scoring falls back to the real test results.
+
+### 🏆 XP, Levels & Achievements
+- XP per attempt scaled by difficulty × score, with speed and no-hint bonuses
+- 8 level tiers from **Intern** to **Distinguished Engineer**
+- 18 achievements (7-Day Streak, Speed Demon, DSA Master, Polyglot, …) with unlock toasts and a gallery on the Progress screen
+
+### 📚 Bookmarks & My Library
+Press `B` on any problem to bookmark it. The **My Library** screen lists your bookmarks with filters and opens a side-by-side comparison of your best solution vs the AI-optimal one.
+
+### 🏢 Company Prep Profiles
+Browse interview profiles for 10 top companies (patterns, focus areas, round structure, difficulty mix) and generate a targeted learning plan with one click. Known companies also enrich Job Description problem generation.
+
+### ✏️ Custom Problems
+Author your own drill problems in the TUI — they join random practice and the review queue — and share them via `codepractice export-problems` / `import-problems`.
+
+### 🌍 Multi-Language Practice
+Solve problems in **Python, JavaScript, or Go** (selector appears for installed toolchains). Test-case verification, syntax highlighting, and AI evaluation all adapt to the chosen language.
+
 ---
 
 ## 🛠 Tech Stack
@@ -70,7 +90,7 @@ Chat with your AI coding coach. It knows your profile, current plan, recent perf
 |-----------|-----------|
 | TUI Framework | [Textual](https://textual.textualize.io/) — full interactive terminal app |
 | Rich Output | [Rich](https://rich.readthedocs.io/) — panels, tables, syntax highlighting |
-| LLM Backend | [Ollama](https://ollama.com/) or [LM Studio](https://lmstudio.ai/) — local AI |
+| LLM Backend | [Ollama](https://ollama.com/) / [LM Studio](https://lmstudio.ai/) (local, default) · [Anthropic API](https://platform.claude.com/) / OpenAI-compatible (cloud, optional) |
 | Data Models | [Pydantic](https://docs.pydantic.dev/) v2 — typed, validated models |
 | CLI | [Typer](https://typer.tiangolo.com/) — modern CLI framework |
 | Database | SQLite — zero-config persistent storage |
@@ -122,6 +142,8 @@ codepractice export   # Export all data to JSON
 codepractice digest   # Daily digest with stats/review/plan snapshot
 codepractice prefetch # Warm local problem cache
 codepractice goal "..." # Save a goal update and optionally regenerate active plan
+codepractice export-problems [file] # Export your custom problems to JSON
+codepractice import-problems <file> # Import shared custom problems
 ```
 
 ---
@@ -145,9 +167,18 @@ OLLAMA_MODEL=llama3
 # LM Studio
 LMSTUDIO_BASE_URL=http://localhost:1234/v1
 LMSTUDIO_MODEL=local-model
+
+# Cloud backends (optional; keys are read from the environment only)
+# LLM_BACKEND=anthropic
+# ANTHROPIC_API_KEY=sk-ant-...
+# ANTHROPIC_MODEL=claude-opus-4-8
+#
+# LLM_BACKEND=openai
+# OPENAI_API_KEY=sk-...
+# OPENAI_BASE_URL=https://api.openai.com/v1
 ```
 
-**Recommended models:** `llama3`, `codellama`, `deepseek-coder`, `mistral`
+**Recommended local models:** `llama3`, `codellama`, `deepseek-coder`, `mistral`
 
 ---
 
@@ -203,7 +234,8 @@ codepractice/
 ## 🗄 Data & Privacy
 
 - All data stored locally in `~/.codepractice/codepractice.db`
-- LLM runs locally — **no data sent to the cloud**
+- With the default local backends (Ollama / LM Studio), **no data is sent to the cloud**
+- The optional `anthropic` / `openai` backends send prompts to the provider's API; API keys live in your `.env` only and are never stored in the database
 - Export anytime: `codepractice export` produces a full JSON snapshot
 
 ---
