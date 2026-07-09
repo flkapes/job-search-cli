@@ -1,4 +1,11 @@
-"""Orchestrates problem creation via LLM with fallback to static bank."""
+"""Orchestrates problem creation via LLM with fallback to static bank.
+
+Generated coding problems follow the same contract as the bundled bank: the
+model must return a complete stdin/stdout program as the reference solution,
+and that solution is executed against the problem's own examples. Problems
+whose solutions don't reproduce their examples are rejected rather than
+saved, so everything in the database is verifiable.
+"""
 
 from __future__ import annotations
 
@@ -12,10 +19,13 @@ from codepractice.llm.prompts.problem_gen import (
     resume_problems_prompt,
 )
 
+GENERATION_MAX_TOKENS = 8192
+
 
 class ProblemGeneratorService:
-    def __init__(self, client: LLMClient) -> None:
+    def __init__(self, client: LLMClient, validate: bool = True) -> None:
         self.client = client
+        self.validate = validate
 
     def generate_dsa(
         self,
@@ -25,8 +35,9 @@ class ProblemGeneratorService:
     ) -> Problem | None:
         messages = dsa_problem_prompt(pattern, difficulty, profile)
         try:
-            raw = self.client.chat_sync(messages, temperature=0.8)
-            return self._parse_single(raw, "dsa", pattern, difficulty, ProblemSource.ai_generated)
+            raw = self.client.chat_sync(messages, temperature=0.8, max_tokens=GENERATION_MAX_TOKENS)
+            problem = self._parse_single(raw, "dsa", pattern, difficulty, ProblemSource.ai_generated)
+            return problem if self._acceptable(problem) else None
         except (LLMError, Exception):
             return None
 
@@ -39,8 +50,9 @@ class ProblemGeneratorService:
     ) -> Problem | None:
         messages = python_fundamentals_prompt(topic, subtopic, difficulty, profile)
         try:
-            raw = self.client.chat_sync(messages, temperature=0.8)
-            return self._parse_single(raw, "python_fundamentals", subtopic, difficulty, ProblemSource.ai_generated)
+            raw = self.client.chat_sync(messages, temperature=0.8, max_tokens=GENERATION_MAX_TOKENS)
+            problem = self._parse_single(raw, "python_fundamentals", subtopic, difficulty, ProblemSource.ai_generated)
+            return problem if self._acceptable(problem) else None
         except (LLMError, Exception):
             return None
 
@@ -52,8 +64,9 @@ class ProblemGeneratorService:
     ) -> list[Problem]:
         messages = jd_problems_prompt(jd_text, count, profile)
         try:
-            raw = self.client.chat_sync(messages, temperature=0.75)
-            return self._parse_list(raw, "practical", "jd", "medium", ProblemSource.jd_driven)
+            raw = self.client.chat_sync(messages, temperature=0.75, max_tokens=GENERATION_MAX_TOKENS)
+            problems = self._parse_list(raw, "practical", "jd", "medium", ProblemSource.jd_driven)
+            return [p for p in problems if self._acceptable(p)]
         except (LLMError, Exception):
             return []
 
@@ -65,10 +78,43 @@ class ProblemGeneratorService:
     ) -> list[Problem]:
         messages = resume_problems_prompt(resume_parsed, difficulty, count)
         try:
-            raw = self.client.chat_sync(messages, temperature=0.75)
-            return self._parse_list(raw, "practical", "resume", difficulty, ProblemSource.resume_driven)
+            raw = self.client.chat_sync(messages, temperature=0.75, max_tokens=GENERATION_MAX_TOKENS)
+            problems = self._parse_list(raw, "practical", "resume", difficulty, ProblemSource.resume_driven)
+            return [p for p in problems if self._acceptable(p)]
         except (LLMError, Exception):
             return []
+
+    # ── Validation ─────────────────────────────────────────────────────────────
+
+    def _acceptable(self, problem: Problem | None) -> bool:
+        if problem is None:
+            return False
+        if not self.validate:
+            return True
+        return self.is_verified(problem)
+
+    @staticmethod
+    def is_verified(problem: Problem) -> bool:
+        """Run the generated reference solution against the problem's examples.
+
+        A generated problem is only trustworthy if its own solution reproduces
+        every example exactly — the same guarantee the bundled bank carries.
+        """
+        if not problem.solution or not problem.solution.code.strip():
+            return False
+        cases = [
+            {"input": e.input, "expected_output": e.output}
+            for e in problem.examples
+            if e.output.strip()
+        ]
+        if len(cases) < 2:
+            return False
+        from codepractice.utils.code_runner import run_with_test_cases, summarize_results
+
+        summary = summarize_results(
+            run_with_test_cases(problem.solution.code, cases, timeout=15)
+        )
+        return summary.fully_verified
 
     def generate_freeform_questions(
         self,

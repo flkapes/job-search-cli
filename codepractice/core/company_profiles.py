@@ -13,21 +13,32 @@ _PATTERN_NAMES = {p["id"]: p["name"] for p in DSA_PATTERNS}
 
 
 @lru_cache(maxsize=1)
-def _load_raw(path_str: str) -> tuple[dict, ...]:
+def _load_raw(path_str: str) -> tuple[str, tuple[dict, ...]]:
     path = Path(path_str)
     if not path.exists():
-        return ()
+        return "", ()
     try:
         data = json.loads(path.read_text())
     except (json.JSONDecodeError, OSError):
-        return ()
-    companies = data.get("companies", []) if isinstance(data, dict) else data
-    return tuple(c for c in companies if isinstance(c, dict) and c.get("id") and c.get("name"))
+        return "", ()
+    if isinstance(data, dict):
+        companies = data.get("companies", [])
+        last_reviewed = str(data.get("last_reviewed", ""))
+    else:
+        companies, last_reviewed = data, ""
+    return last_reviewed, tuple(
+        c for c in companies if isinstance(c, dict) and c.get("id") and c.get("name")
+    )
 
 
 def load_companies(path: Path | None = None) -> list[dict]:
     """All known company profiles, in dataset order."""
-    return list(_load_raw(str(path or COMPANIES_DATA_FILE)))
+    return list(_load_raw(str(path or COMPANIES_DATA_FILE))[1])
+
+
+def get_last_reviewed(path: Path | None = None) -> str:
+    """When the curated interview intel was last reviewed (e.g. '2026-07')."""
+    return _load_raw(str(path or COMPANIES_DATA_FILE))[0]
 
 
 def get_company(company_id: str, path: Path | None = None) -> dict | None:

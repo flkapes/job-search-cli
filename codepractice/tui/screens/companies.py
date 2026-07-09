@@ -7,7 +7,11 @@ from textual.containers import Horizontal, VerticalScroll
 from textual.widget import Widget
 from textual.widgets import Button, DataTable, Input, Label, Select, Static
 
-from codepractice.core.company_profiles import get_company, search_companies
+from codepractice.core.company_profiles import (
+    get_company,
+    get_last_reviewed,
+    search_companies,
+)
 
 
 class CompaniesContent(Widget):
@@ -50,6 +54,14 @@ class CompaniesContent(Widget):
     def compose(self) -> ComposeResult:
         with VerticalScroll():
             yield Label("[bold #58a6ff]🏢 Company Prep Profiles[/bold #58a6ff]")
+            reviewed = get_last_reviewed()
+            if reviewed:
+                yield Static(
+                    f"[#8b949e]Curated profiles last reviewed {reviewed}. Interview "
+                    "formats change — cross-check recent candidate reports before "
+                    "your onsite.[/#8b949e]",
+                    id="company-freshness",
+                )
             yield Input(placeholder="Search companies (e.g. google, stripe)…", id="company-search")
             yield DataTable(id="company-table")
             yield Static("[#8b949e]Select a company to see its interview profile.[/#8b949e]", id="company-details")

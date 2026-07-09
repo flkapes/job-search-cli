@@ -56,9 +56,11 @@ class TestRunCode:
         assert result.runtime_ms >= 0
 
     def test_timeout_enforcement(self):
+        # Killed either by the wall-clock timeout or by RLIMIT_CPU (SIGXCPU) —
+        # whichever fires first; both are acceptable terminations.
         result = run_code("while True: pass", timeout=1)
         assert result.passed is False
-        assert "Timed out" in result.error
+        assert "Timed out" in result.error or "Exit code" in result.error
 
     def test_multiline_code(self):
         code = """
@@ -209,10 +211,24 @@ class TestClampScore:
         _, passed = clamp_score(1.0, True, self._summary(1, 1, 0))
         assert passed is False
 
-    def test_fully_verified_floors_score(self):
-        score, passed = clamp_score(0.3, False, self._summary(2, 2, 2))
+    def test_fully_verified_floors_harsh_llm_score(self):
+        # LLM passed it but scored low — tests passing raise the floor.
+        score, passed = clamp_score(0.55, True, self._summary(2, 2, 2))
         assert score == 0.7
         assert passed is True
+
+    def test_fully_verified_overrules_borderline_llm_fail(self):
+        # LLM failed it with a middling score — deterministic pass wins.
+        score, passed = clamp_score(0.55, False, self._summary(2, 2, 2))
+        assert score == 0.7
+        assert passed is True
+
+    def test_emphatic_llm_fail_survives_verification(self):
+        # Examples pass but the LLM emphatically failed it (e.g. hard-coded
+        # outputs) — the smoke test must not overrule that verdict.
+        score, passed = clamp_score(0.2, False, self._summary(2, 2, 2))
+        assert score == 0.55
+        assert passed is False
 
     def test_partial_verification_no_floor(self):
         score, passed = clamp_score(0.5, False, self._summary(3, 2, 2))

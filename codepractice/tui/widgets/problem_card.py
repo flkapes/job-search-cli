@@ -153,9 +153,26 @@ class ProblemCard(Widget):
             new_state = not self.app.problem_repo.is_bookmarked(self._problem.id)
             self.app.problem_repo.set_bookmark(self._problem.id, new_state)
             self._refresh_bookmark_button()
+            if new_state:
+                self._maybe_unlock_librarian()
             return new_state
         except Exception:
             return None
+
+    def _maybe_unlock_librarian(self) -> None:
+        """Unlock the bookmarking achievement at the moment it is earned."""
+        try:
+            from codepractice.core.gamification import ACHIEVEMENTS_BY_KEY
+            repo = self.app.gamification_repo
+            if repo.bookmark_count() >= 5 and repo.unlock("librarian"):
+                a = ACHIEVEMENTS_BY_KEY["librarian"]
+                self.app.notify(
+                    f"{a.icon} {a.name} — {a.description}",
+                    title="Achievement unlocked!",
+                    timeout=8,
+                )
+        except Exception:
+            pass
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "btn-bookmark":

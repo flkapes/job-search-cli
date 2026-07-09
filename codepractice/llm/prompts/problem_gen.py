@@ -7,20 +7,28 @@ from codepractice.llm.prompts.base import build_profile_context, system_message,
 
 _PROBLEM_SCHEMA = """{
   "title": "string",
-  "description": "string (markdown supported, include context and goal)",
+  "description": "string (markdown; MUST include an **Input** section describing the exact stdin format and an **Output** section describing the exact stdout format)",
   "constraints": "string (input size, edge cases)",
   "examples": [
-    {"input": "string", "output": "string", "explanation": "string"}
+    {"input": "exact stdin text", "output": "exact stdout text", "explanation": "string"}
   ],
   "hints": ["hint1", "hint2", "hint3"],
   "solution": {
-    "code": "python code string",
+    "code": "a COMPLETE runnable Python program that reads stdin and prints stdout",
     "explanation": "string",
     "time_complexity": "O(...)",
     "space_complexity": "O(...)"
   },
   "tags": ["tag1", "tag2"]
 }"""
+
+# Submissions are executed and compared to the examples, so generated problems
+# must follow the same runnable contract as the bundled bank. The generated
+# solution is executed against the examples and the problem is rejected if it
+# does not reproduce them exactly.
+_VERIFIABLE_RULES = """- The task must be solvable as a COMPLETE program: read from standard input, print the answer to standard output
+- Provide at least 2 examples where "input" is the exact stdin text and "output" is the exact expected stdout text (no prose or code fences inside them)
+- The solution "code" must be a complete runnable Python program (including imports) that produces exactly the example outputs — it will be executed to validate the problem"""
 
 
 def dsa_problem_prompt(
@@ -37,9 +45,9 @@ def dsa_problem_prompt(
 
 Requirements:
 - The problem must clearly require {pattern} to solve optimally
-- Include 2-3 concrete examples with explanations
+{_VERIFIABLE_RULES}
 - Provide 3 progressive hints (don't give away the approach immediately)
-- Include a clean Python solution with complexity analysis
+- Include complexity analysis
 
 Respond ONLY with valid JSON matching this schema:
 {_PROBLEM_SCHEMA}"""
@@ -73,8 +81,10 @@ Focus area: {guidance}
 
 The problem should:
 - Test deep understanding, not just syntax recall
-- Include a runnable code example or implementation challenge
 - Be practical and applicable to real-world Python code
+
+Requirements:
+{_VERIFIABLE_RULES}
 
 Respond ONLY with valid JSON matching this schema:
 {_PROBLEM_SCHEMA}"""
@@ -102,6 +112,9 @@ Focus on:
 - Practical skills mentioned in the JD (frameworks, tools, problem domains)
 - Real-world coding tasks they'll likely do on the job
 - NOT just abstract DSA puzzles — make them domain-relevant
+
+Requirements:
+{_VERIFIABLE_RULES}
 
 Respond ONLY with valid JSON as an array of {count} problems:
 [{_PROBLEM_SCHEMA}, ...]"""
@@ -181,6 +194,9 @@ The problems should:
 - Reinforce concepts they've used in their projects
 - Help them speak more confidently about their resume
 - Mix implementation challenges with conceptual depth
+
+Requirements:
+{_VERIFIABLE_RULES}
 
 Respond ONLY with valid JSON as an array of {count} problems:
 [{_PROBLEM_SCHEMA}, ...]"""

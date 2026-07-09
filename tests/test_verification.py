@@ -76,12 +76,21 @@ class TestGuardrailsInEvaluateSync:
         assert feedback.passed is False
         assert feedback.overall_score <= 0.4
 
-    def test_llm_low_score_floored_when_fully_verified(self):
-        client = MockLLMClient('Hmm not sure.\n{"score": 0.2, "passed": false}')
+    def test_llm_borderline_fail_floored_when_fully_verified(self):
+        client = MockLLMClient('Close but unsure.\n{"score": 0.55, "passed": false}')
         svc = AnswerEvaluatorService(client)
         feedback = svc.evaluate_sync(_stdin_problem(), "print(int(input()) * 2)")
         assert feedback.passed is True
         assert feedback.overall_score >= 0.7
+
+    def test_emphatic_llm_fail_not_overruled_by_examples(self):
+        """Hard-coding the printed examples must not force a pass."""
+        client = MockLLMClient('Hard-coded outputs.\n{"score": 0.1, "passed": false}')
+        svc = AnswerEvaluatorService(client)
+        # Prints correct outputs for both examples without computing anything
+        cheat = "import sys\nprint({'21': 42, '5': 10}[sys.stdin.read().strip()])"
+        feedback = svc.evaluate_sync(_stdin_problem(), cheat)
+        assert feedback.passed is False
 
     def test_test_results_included_in_prompt(self):
         client = MockLLMClient('ok\n{"score": 0.8, "passed": true}')

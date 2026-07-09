@@ -20,6 +20,11 @@ from codepractice.utils.code_runner import run_with_test_cases
 PROBLEMS = load_all_problems()
 DIFFICULTIES = {"easy", "medium", "hard"}
 
+# version_control problems are written-answer scenario questions reviewed by
+# the AI coach: they carry a model answer instead of runnable test cases.
+CODING = [p for p in PROBLEMS if p["subcategory"] != "version_control"]
+CONCEPTUAL = [p for p in PROBLEMS if p["subcategory"] == "version_control"]
+
 
 class TestBankShape:
     def test_at_least_fifty_problems(self):
@@ -36,16 +41,23 @@ class TestBankShape:
             assert problem.title and problem.description
             assert problem.difficulty.value in DIFFICULTIES
 
-    def test_every_problem_has_hints_and_solution(self):
+    def test_every_problem_has_hints(self):
         for p in PROBLEMS:
             assert p.get("hints"), p["title"]
-            assert (p.get("solution") or {}).get("code"), p["title"]
 
-    def test_every_problem_has_verifiable_examples(self):
-        for p in PROBLEMS:
-            examples = p.get("examples", [])
-            comparable = [e for e in examples if e.get("output")]
+    def test_coding_problems_have_solutions_and_verifiable_examples(self):
+        for p in CODING:
+            assert (p.get("solution") or {}).get("code"), p["title"]
+            comparable = [e for e in p.get("examples", []) if e.get("output")]
             assert len(comparable) >= 2, f"{p['title']} needs >= 2 checked examples"
+
+    def test_conceptual_questions_have_model_answers(self):
+        assert len(CONCEPTUAL) >= 3
+        for p in CONCEPTUAL:
+            assert (p.get("solution") or {}).get("explanation"), p["title"]
+            assert "Written-answer" in p["description"], (
+                f"{p['title']} must tell the user it is a written-answer question"
+            )
 
 
 class TestTrackCoverage:
@@ -71,7 +83,7 @@ class TestTrackCoverage:
         assert sum(1 for p in PROBLEMS if p["category"] == "practical") >= 5
 
 
-@pytest.mark.parametrize("problem", PROBLEMS, ids=lambda p: p["title"])
+@pytest.mark.parametrize("problem", CODING, ids=lambda p: p["title"])
 def test_reference_solution_passes_its_own_examples(problem):
     cases = [
         {"input": e.get("input", ""), "expected_output": e["output"]}

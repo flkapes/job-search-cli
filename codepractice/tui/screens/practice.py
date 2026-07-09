@@ -110,7 +110,16 @@ class PracticeContent(Widget):
     _simulation_deadline: datetime | None = None
     _simulation_locked: bool = False
     _peek_attempts: int = 0
+    _sim_problem_index: int = 0
     _language: str = "python"
+
+    def _effective_difficulty(self) -> str | None:
+        """Difficulty for the next problem — simulations alternate medium/hard."""
+        if self._simulation_mode:
+            difficulty = "medium" if self._sim_problem_index % 2 == 0 else "hard"
+            self._sim_problem_index += 1
+            return difficulty
+        return self._drill_difficulty
 
     def __init__(
         self,
@@ -129,6 +138,8 @@ class PracticeContent(Widget):
         self._simulation_duration_sec = simulation_duration_sec if simulation_mode else 0
         if simulation_mode:
             self._init_session_type = "interview_simulation"
+            # Simulations mirror real interviews: DSA only, medium/hard mix.
+            self._drill_category = "dsa"
         elif session_type:
             self._init_session_type = session_type
         if drill_category:
@@ -226,7 +237,7 @@ class PracticeContent(Widget):
         self._load_next_problem(
             category=self._drill_category,
             subcategory=self._drill_subcategory,
-            difficulty=self._drill_difficulty,
+            difficulty=self._effective_difficulty(),
         )
 
     def _load_next_problem(
@@ -293,6 +304,10 @@ class PracticeContent(Widget):
         )
         self._show_problem()
 
+    # Categories whose problems are language-agnostic; python_fundamentals
+    # problems are Python-specific by definition, so the selector locks there.
+    _MULTI_LANGUAGE_CATEGORIES = ("dsa", "practical")
+
     def _show_problem(self) -> None:
         if not self._problem:
             return
@@ -302,7 +317,21 @@ class PracticeContent(Widget):
         finish_btn = self.query_one("#btn-finish-sim", Button)
         hint_btn.disabled = self._simulation_mode
         finish_btn.display = self._simulation_mode
+        self._gate_language_selector()
         self._show_phase("problem")
+
+    def _gate_language_selector(self) -> None:
+        """Offer language choice only where the problem isn't language-specific."""
+        try:
+            selector = self.query_one("#language-select", Select)
+            allowed = self._problem.category in self._MULTI_LANGUAGE_CATEGORIES
+            selector.display = allowed and len(available_languages()) > 1
+            if not allowed and self._language != "python":
+                self._language = "python"
+                selector.value = "python"
+                self.query_one("#code-editor", CodeEditor).set_language("python")
+        except Exception:
+            pass
 
     # ── Actions ────────────────────────────────────────────────────────────────
 
@@ -558,7 +587,7 @@ class PracticeContent(Widget):
         self._load_next_problem(
             category=self._drill_category,
             subcategory=self._drill_subcategory,
-            difficulty=self._drill_difficulty,
+            difficulty=self._effective_difficulty(),
         )
 
     def action_back_to_problem(self) -> None:
@@ -610,13 +639,24 @@ class PracticeContent(Widget):
             self._show_scorecard(card)
 
     def _show_scorecard(self, card: dict) -> None:
-        avg_pct = int(float(card.get("avg_score", 0.0)) * 100)
+        from codepractice.core.difficulty import apply_peek_penalty
+
+        raw_avg = float(card.get("avg_score", 0.0))
+        adjusted = apply_peek_penalty(raw_avg, self._peek_attempts)
+        avg_pct = int(adjusted * 100)
         verdict = "PASS" if avg_pct >= 70 else "FAIL"
         lines = [
             "[bold]Interview Simulation Complete[/bold]",
             f"Attempted: {card.get('attempted', 0)}",
             f"Solved: {card.get('solved', 0)}",
-            f"Average score: {avg_pct}%",
+            f"Average score: {int(raw_avg * 100)}%",
+        ]
+        if self._peek_attempts:
+            lines.append(
+                f"Hint peeks: {self._peek_attempts} "
+                f"(-{self._peek_attempts * 5}% → final {avg_pct}%)"
+            )
+        lines += [
             f"Verdict: [bold]{verdict}[/bold]",
             "Category breakdown:",
         ]

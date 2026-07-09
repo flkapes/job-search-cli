@@ -136,6 +136,7 @@ class ProfileContent(Widget):
             # Reinitialize LLM client with new settings
             self.app._llm = None
             self.app._init_llm()
+            self.app.refresh_llm_status()
             self.query_one("#save-status", Static).update("[green]✓ Settings saved![/green]")
         except Exception as e:
             self.query_one("#save-status", Static).update(f"[red]✗ Error: {e}[/red]")

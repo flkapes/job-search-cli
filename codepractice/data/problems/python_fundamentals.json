@@ -516,102 +516,77 @@
     "category": "python_fundamentals",
     "subcategory": "version_control",
     "difficulty": "easy",
-    "title": "Branch and Switch",
-    "description": "Print the single git command that creates a branch with the given name\n**and** switches to it (the classic `checkout -b` form).\n\n**Input**: one line \u2014 the branch name.\n\n**Output**: the exact command.",
-    "constraints": "Branch names contain no spaces",
-    "examples": [
-      {
-        "input": "feature-login",
-        "output": "git checkout -b feature-login",
-        "explanation": "-b creates and switches in one step."
-      },
-      {
-        "input": "bugfix/timer",
-        "output": "git checkout -b bugfix/timer",
-        "explanation": "Slashes are valid in branch names."
-      }
-    ],
+    "title": "Merge vs Rebase: Make the Call",
+    "description": "**Written-answer question** \u2014 type your answer in the editor; the AI coach\nreviews it (there are no test cases to run).\n\nYour feature branch is three commits ahead of `main`, and `main` has moved\non. A teammate has already pulled your feature branch. Should you `merge`\n`main` into your branch or `rebase` onto it? Explain your choice, what each\ncommand does to history, and the rule about rebasing shared branches.",
+    "constraints": "Aim for 4-8 sentences",
+    "examples": [],
     "hints": [
-      "`git branch x` creates without switching; `git checkout -b x` does both."
+      "What does rebase do to the commit hashes of your branch?",
+      "Who else is affected if those hashes change?"
     ],
     "solution": {
-      "code": "import sys\n\nbranch = sys.stdin.read().strip()\nprint(f\"git checkout -b {branch}\")",
-      "explanation": "checkout -b is shorthand for branch + checkout.",
-      "time_complexity": "O(1)",
-      "space_complexity": "O(1)"
-    },
-    "tags": [
-      "git",
-      "branching"
-    ]
-  },
-  {
-    "source": "static",
-    "category": "python_fundamentals",
-    "subcategory": "version_control",
-    "difficulty": "medium",
-    "title": "Soft Reset",
-    "description": "You committed too early and want to undo the last `n` commits while keeping\nevery change staged. Print the exact command.\n\n**Input**: one line \u2014 the number of commits `n`.\n\n**Output**: `git reset --soft HEAD~n` with your `n`.",
-    "constraints": "1 <= n <= 20",
-    "examples": [
-      {
-        "input": "1",
-        "output": "git reset --soft HEAD~1",
-        "explanation": "Moves the branch pointer back one commit, keeping the index."
-      },
-      {
-        "input": "3",
-        "output": "git reset --soft HEAD~3",
-        "explanation": "Same idea across three commits."
-      }
-    ],
-    "hints": [
-      "--soft keeps both the working tree and the index; --hard would discard your work."
-    ],
-    "solution": {
-      "code": "import sys\n\nn = sys.stdin.read().strip()\nprint(f\"git reset --soft HEAD~{n}\")",
-      "explanation": "Soft reset rewinds history without touching your files or the staging area.",
-      "time_complexity": "O(1)",
-      "space_complexity": "O(1)"
-    },
-    "tags": [
-      "git",
-      "reset"
-    ]
-  },
-  {
-    "source": "static",
-    "category": "python_fundamentals",
-    "subcategory": "version_control",
-    "difficulty": "medium",
-    "title": "Merge or Rebase",
-    "description": "Given the strategy (`merge` or `rebase`) and the branch to integrate,\nprint the exact command you would run from your feature branch.\n\n**Input**: one line \u2014 `strategy branch`.\n\n**Output**: `git {strategy} {branch}`.",
-    "constraints": "strategy is merge or rebase",
-    "examples": [
-      {
-        "input": "merge main",
-        "output": "git merge main",
-        "explanation": "Merge preserves history with a merge commit."
-      },
-      {
-        "input": "rebase main",
-        "output": "git rebase main",
-        "explanation": "Rebase replays your commits for a linear history."
-      }
-    ],
-    "hints": [
-      "Merge keeps true history; rebase rewrites yours on top of the target \u2014 never rebase shared branches."
-    ],
-    "solution": {
-      "code": "import sys\n\nstrategy, branch = sys.stdin.read().split()\nprint(f\"git {strategy} {branch}\")",
-      "explanation": "Both integrate changes; they differ in history shape and safety on shared branches.",
-      "time_complexity": "O(1)",
-      "space_complexity": "O(1)"
+      "code": "",
+      "explanation": "Merge: creates a merge commit joining both histories; your branch's commits are untouched, so it is safe on shared branches at the cost of a busier graph. Rebase: replays your commits on top of main, rewriting them with new hashes for a linear history. Because a teammate has pulled the branch, rebasing would rewrite commits they already have, forcing conflicted force-pulls \u2014 so merge here. The rule: never rebase commits that others may have based work on; rebase freely on private branches.",
+      "time_complexity": "-",
+      "space_complexity": "-"
     },
     "tags": [
       "git",
       "merge",
-      "rebase"
+      "rebase",
+      "conceptual"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "version_control",
+    "difficulty": "medium",
+    "title": "Recover the Lost Commit",
+    "description": "**Written-answer question** \u2014 type your answer in the editor; the AI coach\nreviews it (there are no test cases to run).\n\nYou ran `git reset --hard HEAD~2` and realized the two discarded commits\ncontained work you need. The commits are no longer reachable from any\nbranch. Explain step by step how you would recover them and why this works.",
+    "constraints": "Aim for 4-8 sentences",
+    "examples": [],
+    "hints": [
+      "Deleted commits are rarely gone immediately \u2014 what log does git keep of where HEAD has been?",
+      "Once you find the right hash, how do you make a branch point at it?"
+    ],
+    "solution": {
+      "code": "",
+      "explanation": "git reflog lists every position HEAD has occupied, including the pre-reset commit. Find the entry from before the reset (e.g. HEAD@{1}), inspect it with git show, then recover with git reset --hard <hash> (or safer: git branch rescue <hash> to keep the current state). This works because reset only moves the branch pointer \u2014 the commit objects remain in the object database until garbage collection, and the reflog keeps them reachable for ~90 days by default.",
+      "time_complexity": "-",
+      "space_complexity": "-"
+    },
+    "tags": [
+      "git",
+      "reflog",
+      "recovery",
+      "conceptual"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "version_control",
+    "difficulty": "medium",
+    "title": "The Force-Push Incident",
+    "description": "**Written-answer question** \u2014 type your answer in the editor; the AI coach\nreviews it (there are no test cases to run).\n\nA teammate ran `git push --force` on a shared branch and erased two of your\npushed commits. Explain (1) what force-push did to the remote branch,\n(2) how you can restore your commits from your local clone, and (3) what\nthe team should use instead of `--force` to prevent a repeat.",
+    "constraints": "Aim for 5-10 sentences",
+    "examples": [],
+    "hints": [
+      "Your local clone still has the erased commits \u2014 where?",
+      "There is a force variant that refuses to overwrite commits it hasn't seen."
+    ],
+    "solution": {
+      "code": "",
+      "explanation": "(1) Force-push replaced the remote branch pointer with the teammate's local one, discarding any commits not in their history \u2014 the remote now tells everyone else to rewind. (2) Your local branch (or reflog) still contains the erased commits: create a branch on them (git branch rescue <hash>), merge or cherry-pick them back, and push normally. (3) Use git push --force-with-lease, which aborts if the remote has commits you haven't fetched, and protect shared branches server-side so force-pushes are rejected outright.",
+      "time_complexity": "-",
+      "space_complexity": "-"
+    },
+    "tags": [
+      "git",
+      "force-push",
+      "recovery",
+      "conceptual"
     ]
   }
 ]

@@ -76,13 +76,28 @@ class CodePracticeApp(App):
             )
         else:
             self._llm = get_client()
-        self._check_llm_status()
 
-    def _check_llm_status(self) -> None:
-        try:
-            self._llm_online = self.llm.health_check()
-        except Exception:
-            self._llm_online = False
+    def refresh_llm_status(self) -> None:
+        """Probe backend health on a worker thread — cloud backends do a
+        network round-trip, which must not block the UI (or startup)."""
+        llm = self.llm
+
+        def _probe() -> None:
+            try:
+                online = llm.health_check()
+            except Exception:
+                online = False
+
+            def _apply() -> None:
+                self._llm_online = online
+                try:
+                    self.query_one(AppHeader).llm_online = online
+                except Exception:
+                    pass
+
+            self.call_from_thread(_apply)
+
+        self.run_worker(_probe, thread=True, exclusive=True, group="llm-health")
 
     def seed_problems(self) -> None:
         """Seed static problems on first run."""
@@ -96,9 +111,7 @@ class CodePracticeApp(App):
     def on_mount(self) -> None:
         self.seed_problems()
         self._init_llm()
-        # Update header LLM indicator
-        header = self.query_one(AppHeader)
-        header.llm_online = self._llm_online
+        self.refresh_llm_status()
 
     def compose(self) -> ComposeResult:
         yield AppHeader()

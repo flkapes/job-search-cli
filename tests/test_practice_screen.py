@@ -56,3 +56,18 @@ def test_submit_paths_noop_outside_coding_phase(monkeypatch):
     widget.on_code_editor_code_submitted(None)
 
     assert calls["count"] == 0
+
+
+def test_simulation_pins_dsa_and_alternates_difficulty():
+    from codepractice.tui.screens.practice import PracticeContent
+    widget = PracticeContent(simulation_mode=True)
+    assert widget._drill_category == "dsa"
+    difficulties = [widget._effective_difficulty() for _ in range(4)]
+    assert difficulties == ["medium", "hard", "medium", "hard"]
+
+
+def test_non_simulation_uses_drill_difficulty():
+    from codepractice.tui.screens.practice import PracticeContent
+    widget = PracticeContent(drill_category="dsa", drill_difficulty="easy")
+    assert widget._effective_difficulty() == "easy"
+    assert widget._effective_difficulty() == "easy"  # stable, no alternation

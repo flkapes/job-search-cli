@@ -211,3 +211,53 @@ class TestAwardAttempt:
         })
         _, new = award_attempt(gam, sessions, problem, pass_id, 0.9, True)
         assert any(a.key == "comeback" for a in new)
+
+
+class TestAntiFarming:
+    def _setup(self, tmp_db):
+        problems = ProblemRepository(tmp_db)
+        sessions = SessionRepository(tmp_db)
+        gam = GamificationRepository(tmp_db)
+        pid = problems.create({"category": "dsa", "subcategory": "bfs",
+                               "title": "T", "description": "d", "difficulty": "medium"})
+        sid = sessions.start_session("free")
+        return problems, sessions, gam, pid, sid
+
+    def _attempt_and_award(self, sessions, gam, problems, pid, sid, passed, score=0.9):
+        aid = sessions.record_attempt({
+            "session_id": sid, "problem_id": pid, "ai_score": score,
+            "passed": passed, "time_spent_sec": 400, "hints_used": 1,
+        })
+        problem = Problem.from_db(problems.get_by_id(pid))
+        xp, _ = award_attempt(gam, sessions, problem, aid, score, passed,
+                              time_spent_sec=400, hints_used=1)
+        return xp
+
+    def test_repeat_solve_pays_quarter(self, tmp_db):
+        problems, sessions, gam, pid, sid = self._setup(tmp_db)
+        first = self._attempt_and_award(sessions, gam, problems, pid, sid, passed=True)
+        repeat = self._attempt_and_award(sessions, gam, problems, pid, sid, passed=True)
+        assert first > 0
+        assert repeat == int(round(first * 0.25))
+
+    def test_failing_a_solved_problem_pays_nothing(self, tmp_db):
+        problems, sessions, gam, pid, sid = self._setup(tmp_db)
+        self._attempt_and_award(sessions, gam, problems, pid, sid, passed=True)
+        before = gam.total_xp()
+        xp = self._attempt_and_award(sessions, gam, problems, pid, sid, passed=False, score=0.3)
+        assert xp == 0
+        assert gam.total_xp() == before
+
+    def test_first_fail_still_pays_fraction(self, tmp_db):
+        problems, sessions, gam, pid, sid = self._setup(tmp_db)
+        xp = self._attempt_and_award(sessions, gam, problems, pid, sid, passed=False, score=0.4)
+        assert xp > 0
+
+    def test_grinding_cannot_beat_one_real_solve(self, tmp_db):
+        problems, sessions, gam, pid, sid = self._setup(tmp_db)
+        first = self._attempt_and_award(sessions, gam, problems, pid, sid, passed=True)
+        farmed = sum(
+            self._attempt_and_award(sessions, gam, problems, pid, sid, passed=True)
+            for _ in range(4)
+        )
+        assert farmed <= first

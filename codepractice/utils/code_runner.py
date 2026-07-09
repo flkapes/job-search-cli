@@ -182,8 +182,12 @@ def summarize_results(results: list[TestCaseResult]) -> VerificationSummary:
 def clamp_score(score: float, passed: bool, summary: VerificationSummary | None) -> tuple[float, bool]:
     """Apply deterministic guardrails to an LLM-judged score.
 
-    The LLM refines within the bounds the test results allow — it cannot pass
-    code that fails its test cases, and fully verified code gets a floor.
+    Failing test cases are authoritative: the LLM cannot pass code that fails
+    them. Passing them is weaker evidence — the examples are printed on the
+    problem card and can be hard-coded — so full verification grants a score
+    floor but only overrules a failing LLM verdict when that verdict wasn't
+    emphatic (an emphatic fail usually means the LLM spotted a non-solution,
+    e.g. printed constants).
     """
     if summary is None or summary.indeterminate:
         return score, passed
@@ -196,7 +200,8 @@ def clamp_score(score: float, passed: bool, summary: VerificationSummary | None)
         return score, False
 
     if summary.fully_verified:
-        score = max(score, 0.7)
-        return score, True
+        if passed or score >= 0.5:
+            return max(score, 0.7), True
+        return max(score, 0.55), False
 
     return score, passed

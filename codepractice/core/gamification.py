@@ -200,15 +200,30 @@ def award_attempt(
 
     Returns (xp_earned, newly_unlocked). Individual context queries are
     best-effort — a failure in one must not block the reward flow.
+
+    Anti-farming: the full reward is paid on a problem's first solve. Solving
+    it again pays 25%, and failing a problem you have already solved pays
+    nothing, so resubmitting the same problem cannot grind XP.
     """
     difficulty = getattr(problem.difficulty, "value", str(problem.difficulty))
     xp = xp_for_attempt(difficulty, score, passed, time_spent_sec, hints_used)
-    gam_repo.add_xp(
-        xp,
-        reason=f"{'solved' if passed else 'attempted'} {difficulty}",
-        attempt_id=attempt_id,
-        problem_id=problem.id,
-    )
+
+    already_solved = False
+    if problem.id and attempt_id:
+        try:
+            already_solved = gam_repo.has_prior_passed_attempt(problem.id, attempt_id)
+        except Exception:
+            already_solved = False
+    if already_solved:
+        xp = int(round(xp * 0.25)) if passed else 0
+
+    if xp:
+        gam_repo.add_xp(
+            xp,
+            reason=f"{'re-solved' if passed and already_solved else 'solved' if passed else 'attempted'} {difficulty}",
+            attempt_id=attempt_id,
+            problem_id=problem.id,
+        )
 
     context: dict = {
         "last_score": score,

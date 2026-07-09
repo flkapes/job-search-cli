@@ -12,6 +12,10 @@ from codepractice.llm.prompts.plan_gen import (
     evolve_plan_prompt,
 )
 
+# Day-by-day JSON for long plans is large; a small cap silently truncates the
+# JSON on cloud backends and the user gets the generic fallback plan instead.
+PLAN_MAX_TOKENS = 16000
+
 
 class LearningPlanManager:
     def __init__(self, client: LLMClient) -> None:
@@ -26,7 +30,7 @@ class LearningPlanManager:
     ) -> LearningPlan | None:
         messages = create_plan_prompt(goal, duration_days, profile, weak_areas)
         try:
-            raw = self.client.chat_sync(messages, temperature=0.7)
+            raw = self.client.chat_sync(messages, temperature=0.7, max_tokens=PLAN_MAX_TOKENS)
             return self._parse_plan(raw, goal, duration_days)
         except (LLMError, Exception):
             return self._default_plan(goal, duration_days)
@@ -50,7 +54,7 @@ class LearningPlanManager:
             weak_areas,
         )
         try:
-            raw = self.client.chat_sync(messages, temperature=0.65)
+            raw = self.client.chat_sync(messages, temperature=0.65, max_tokens=PLAN_MAX_TOKENS)
             new_days_data = extract_json(raw)
             if isinstance(new_days_data, list):
                 new_days = [self._parse_day(d) for d in new_days_data if isinstance(d, dict)]

@@ -118,3 +118,10 @@ class TestScreen:
     def test_companies_screen_imports(self):
         from codepractice.tui.screens.companies import CompaniesContent
         assert CompaniesContent is not None
+
+
+class TestFreshness:
+    def test_last_reviewed_stamp_present(self):
+        from codepractice.core.company_profiles import get_last_reviewed
+        stamp = get_last_reviewed()
+        assert stamp and stamp[:4].isdigit()

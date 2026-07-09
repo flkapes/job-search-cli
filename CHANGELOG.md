@@ -30,6 +30,29 @@ All notable changes to CodePractice are documented here.
   this cycle).
 
 ### Changed
+- **AI-generated problems are now self-verifying** — generation prompts
+  require runnable stdin/stdout problems, and the generated reference
+  solution is executed against the problem's own examples before saving;
+  problems that fail are rejected, so everything in the database carries the
+  same verification guarantee as the bundled bank.
+- **Score guardrails are asymmetric by design** — failing test cases still
+  caps the AI score, but passing the two visible examples no longer overrules
+  an emphatic AI fail (hard-coding the printed outputs can't force a pass).
+- **XP anti-farming** — full XP on a problem's first solve, 25% on repeat
+  solves, nothing for failing an already-solved problem.
+- **Interview Simulation now behaves like an interview** — problems are
+  DSA-only alternating medium/hard, and each hint peek deducts 5% from the
+  final scorecard (the penalty was previously recorded but never applied).
+- **Version-control problems are scenario questions** — written answers
+  reviewed by the AI coach with model answers, replacing echo-a-git-command
+  exercises.
+- Language selection is offered only on language-agnostic problems (DSA and
+  practical); Python-fundamentals problems lock to Python.
+- Learning-plan generation uses a 16K token budget so cloud backends don't
+  silently truncate long plans into the generic fallback.
+- Backend health checks run off the UI thread (no network round-trip during
+  app startup); bookmark achievements unlock immediately; company profiles
+  carry a last-reviewed date shown in the browser.
 - **Problem bank rewritten and expanded** — 53 bundled problems (up from 27),
   covering every DSA pattern at easy/medium/hard, three problems per Python
   topic, and a new practical category. All problems use verifiable

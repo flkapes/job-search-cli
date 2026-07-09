@@ -83,6 +83,14 @@ class GamificationRepository(BaseRepository):
         )
         return int(row["cnt"]) if row else 0
 
+    def has_prior_passed_attempt(self, problem_id: int, before_attempt_id: int) -> bool:
+        row = self._execute_one(
+            """SELECT COUNT(*) AS cnt FROM problem_attempts
+               WHERE problem_id = ? AND passed = 1 AND id < ?""",
+            (problem_id, before_attempt_id),
+        )
+        return bool(row and row["cnt"] > 0)
+
     def has_prior_failed_attempt(self, problem_id: int, before_attempt_id: int) -> bool:
         row = self._execute_one(
             """SELECT COUNT(*) AS cnt FROM problem_attempts

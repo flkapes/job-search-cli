@@ -64,15 +64,16 @@ Chat with your AI coding coach. It knows your profile, current plan, recent perf
 
 ### 🧪 Interview Simulation Mode
 - Timed interview-style practice sessions from Dashboard (**Interview Sim**)
+- DSA problems only, alternating medium and hard — like a real loop
 - Countdown timer with color states (green → yellow → red)
-- Hints disabled in simulation mode (peek attempts tracked as penalty metadata)
+- Hints disabled; each peek deducts 5% from the final score
 - Early finish action + automatic timeout end
-- End-of-session scorecard with attempted/solved, average score, and category breakdown
+- End-of-session scorecard with attempted/solved, score (with peek penalty), and category breakdown
 
 ### ✅ Verified Test Cases
 Submissions run against each problem's examples and the actual output is compared to the expected output. The AI refines the score but can't pass code that fails its test cases — and when the LLM is offline, scoring falls back to the real test results.
 
-All **53 bundled problems** — every DSA pattern at every difficulty, three per Python topic, plus a practical set — ship in verifiable input/output format, and every reference solution is machine-checked against its examples in CI.
+All **53 bundled problems** — every DSA pattern at every difficulty, three per Python topic, plus a practical set — ship in verifiable input/output format, and every reference solution is machine-checked against its examples in CI. AI-generated problems carry the same guarantee: the generated solution is executed against the generated examples, and problems that fail are rejected instead of saved.
 
 ### 🏆 XP, Levels & Achievements
 - XP per attempt scaled by difficulty × score, with speed and no-hint bonuses
