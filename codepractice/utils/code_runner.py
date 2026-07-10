@@ -7,7 +7,7 @@ import time
 from dataclasses import dataclass, field
 
 from codepractice.utils.languages import build_run_command
-from codepractice.utils.sandbox import make_preexec
+from codepractice.utils.sandbox import wrap_with_limits
 
 
 @dataclass
@@ -82,12 +82,11 @@ def run_code(code: str, timeout: int = 10, stdin: str = "", language: str = "pyt
     start = time.perf_counter()
     try:
         result = subprocess.run(
-            cmd,
+            wrap_with_limits(cmd, language, timeout),
             input=stdin,
             capture_output=True,
             text=True,
             timeout=timeout,
-            preexec_fn=make_preexec(language, timeout),
         )
         elapsed = (time.perf_counter() - start) * 1000
         passed = result.returncode == 0
