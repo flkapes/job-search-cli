@@ -54,3 +54,16 @@ class TestLimitsEnforced:
         result = run_code(code)
         assert result.passed is False
         assert "wrote" not in result.stdout
+
+
+class TestFileSizeLimits:
+    def test_go_gets_toolchain_headroom(self):
+        from codepractice.utils.sandbox import FILE_SIZE_LIMITS
+        # `go run` compiles first; the compiler writes package archives far
+        # beyond the interpreter-language cap (regression: CI "file too large").
+        assert FILE_SIZE_LIMITS["go"] > FILE_SIZE_LIMITS["python"]
+
+    def test_interpreted_languages_keep_tight_cap(self):
+        from codepractice.utils.sandbox import FILE_SIZE_LIMITS, MB
+        assert FILE_SIZE_LIMITS["python"] == 8 * MB
+        assert FILE_SIZE_LIMITS["javascript"] == 8 * MB

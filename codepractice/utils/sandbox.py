@@ -26,7 +26,15 @@ ADDRESS_SPACE_LIMITS: dict[str, int | None] = {
     "go": None,  # Go's runtime arena is incompatible with RLIMIT_AS
 }
 
-MAX_WRITTEN_FILE_BYTES = 8 * MB
+# File-size caps are language-aware too: `go run` compiles first, and with a
+# cold build cache the compiler writes package archives well beyond 8 MB
+# ("compile: ... file too large" under RLIMIT_FSIZE). The Go cap still bounds
+# a runaway disk-filler, just with toolchain headroom.
+FILE_SIZE_LIMITS: dict[str, int] = {
+    "python": 8 * MB,
+    "javascript": 8 * MB,
+    "go": 512 * MB,
+}
 
 
 def make_preexec(language: str, timeout: int) -> Callable[[], None] | None:
@@ -35,6 +43,7 @@ def make_preexec(language: str, timeout: int) -> Callable[[], None] | None:
         return None
 
     address_space = ADDRESS_SPACE_LIMITS.get(language, ADDRESS_SPACE_LIMITS["python"])
+    max_file_bytes = FILE_SIZE_LIMITS.get(language, FILE_SIZE_LIMITS["python"])
     cpu_seconds = max(1, int(timeout))
 
     def _apply_limits() -> None:
@@ -49,7 +58,7 @@ def make_preexec(language: str, timeout: int) -> Callable[[], None] | None:
                 pass  # never block execution because a limit couldn't apply
 
         _set(resource.RLIMIT_CPU, cpu_seconds)
-        _set(resource.RLIMIT_FSIZE, MAX_WRITTEN_FILE_BYTES)
+        _set(resource.RLIMIT_FSIZE, max_file_bytes)
         _set(resource.RLIMIT_CORE, 0)
         if address_space is not None:
             _set(resource.RLIMIT_AS, address_space)
