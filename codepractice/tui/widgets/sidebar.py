@@ -72,14 +72,17 @@ class SidebarNav(Widget):
             ("python_track", "🐍 Python Track"),
             ("dsa_training", "🧩 DSA Patterns"),
             ("practice", "⚡ Free Practice"),
+            ("create_problem", "✏️ New Problem"),
         ]),
         ("prepare", [
             ("resume_drill", "📄 Resume Drill"),
             ("job_desc", "💼 Job Description"),
+            ("companies", "🏢 Companies"),
             ("learning_plan", "📅 Learning Plan"),
         ]),
         ("tools", [
             ("chat", "💬 AI Coach"),
+            ("library", "📚 My Library"),
             ("progress", "📊 Progress"),
             ("profile", "👤 Profile"),
         ]),

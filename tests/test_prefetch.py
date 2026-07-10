@@ -11,9 +11,17 @@ from codepractice.main import app
 
 runner = CliRunner()
 
+# A verifiable generated problem: the solution reproduces both examples, so
+# it survives the generator's self-verification gate.
 _PROBLEM_JSON = (
-    '{"title": "Prefetch Test", "description": "Desc", "constraints": "", '
-    '"examples": [], "hints": [], "solution": null, "tags": ["test"]}'
+    '{"title": "Prefetch Test", "description": "Echo the doubled input.\\n\\n'
+    '**Input**: one integer. **Output**: the integer doubled.", "constraints": "", '
+    '"examples": ['
+    '{"input": "2", "output": "4", "explanation": ""}, '
+    '{"input": "5", "output": "10", "explanation": ""}], '
+    '"hints": ["multiply"], '
+    '"solution": {"code": "print(int(input()) * 2)", "explanation": "", '
+    '"time_complexity": "O(1)", "space_complexity": "O(1)"}, "tags": ["test"]}'
 )
 
 

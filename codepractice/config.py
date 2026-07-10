@@ -18,19 +18,28 @@ DB_PATH = DATA_DIR / "codepractice.db"
 EXPORTS_DIR = DATA_DIR / "exports"
 EXPORTS_DIR.mkdir(exist_ok=True)
 
-# Static problem data bundled with the package
-_PACKAGE_DIR = Path(__file__).parent.parent
+# Static data bundled inside the package so installed wheels ship it too
+_PACKAGE_DIR = Path(__file__).parent
 PROBLEMS_DATA_DIR = _PACKAGE_DIR / "data" / "problems"
+COMPANIES_DATA_FILE = _PACKAGE_DIR / "data" / "companies.json"
 
 # ── LLM Configuration ──────────────────────────────────────────────────────────
 
-LLM_BACKEND = os.environ.get("LLM_BACKEND", "ollama")  # "ollama" | "lmstudio"
+LLM_BACKEND = os.environ.get("LLM_BACKEND", "ollama")  # "ollama" | "lmstudio" | "anthropic" | "openai"
 
 OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
 OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "llama3")
 
 LMSTUDIO_BASE_URL = os.environ.get("LMSTUDIO_BASE_URL", "http://localhost:1234/v1")
 LMSTUDIO_MODEL = os.environ.get("LMSTUDIO_MODEL", "local-model")
+
+# Cloud backends — API keys are read from the environment only, never persisted.
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+ANTHROPIC_MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-opus-4-8")
+
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
+OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
 
 LLM_TIMEOUT = 120  # seconds
 LLM_MAX_RETRIES = 3

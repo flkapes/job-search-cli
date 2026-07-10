@@ -181,7 +181,31 @@ class LearningPlanContent(Widget):
             stream.show_error(f"Error: {e}")
 
     def _start_today(self) -> None:
-        """Jump to practice mode for today's plan tasks."""
+        """Start practice drilling today's plan task (falls back to free practice)."""
+        try:
+            plan = self.app.plan_repo.get_active()
+            schedule = ((plan or {}).get("plan") or {}).get("daily_schedule", [])
+            today = next(
+                (d for d in schedule if d.get("day_number") == (plan or {}).get("current_day", 1)),
+                None,
+            )
+            task = next(
+                (t for t in (today or {}).get("tasks", []) if t.get("type") == "problem"),
+                None,
+            )
+            if task:
+                from codepractice.tui.screens.practice import PracticeContent
+                content = self.app.query_one("#content")
+                content.remove_children()
+                content.mount(PracticeContent(
+                    session_type="plan",
+                    drill_category=task.get("problem_category") or None,
+                    drill_subcategory=task.get("problem_subcategory") or None,
+                    drill_difficulty=task.get("difficulty") or None,
+                ))
+                return
+        except Exception:
+            pass
         self.app._switch_content("practice")
 
     def _evolve_plan(self) -> None:

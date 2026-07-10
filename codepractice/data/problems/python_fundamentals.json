@@ -1,0 +1,592 @@
+[
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "vocabulary",
+    "difficulty": "easy",
+    "title": "Squares of the Evens",
+    "description": "Using a single list comprehension, build the squares of the even numbers\nin the input (preserving order) and print them space-separated.\n\n**Input**: the integers, space-separated, on one line.\n\n**Output**: the squares of the even values, space-separated.",
+    "constraints": "1 <= n <= 10^4; at least one even value",
+    "examples": [
+      {
+        "input": "1 2 3 4",
+        "output": "4 16",
+        "explanation": "2^2 and 4^2."
+      },
+      {
+        "input": "6 5 2",
+        "output": "36 4",
+        "explanation": "Order is preserved."
+      }
+    ],
+    "hints": [
+      "A comprehension can filter and transform in one expression: [x*x for x in nums if ...]."
+    ],
+    "solution": {
+      "code": "import sys\n\nnums = map(int, sys.stdin.read().split())\nsquares = [x * x for x in nums if x % 2 == 0]\nprint(\" \".join(map(str, squares)))",
+      "explanation": "One comprehension both filters (if) and maps (x*x).",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)"
+    },
+    "tags": [
+      "comprehensions"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "vocabulary",
+    "difficulty": "medium",
+    "title": "Fibonacci Generator",
+    "description": "Implement `fib()` as a generator function (using `yield`) that produces the\nFibonacci sequence `0, 1, 1, 2, ...` indefinitely, then print the first `n`\nvalues.\n\n**Input**: a single integer `n`.\n\n**Output**: the first `n` Fibonacci numbers, space-separated.",
+    "constraints": "1 <= n <= 80",
+    "examples": [
+      {
+        "input": "5",
+        "output": "0 1 1 2 3",
+        "explanation": "The first five values."
+      },
+      {
+        "input": "1",
+        "output": "0",
+        "explanation": "Just the seed value."
+      }
+    ],
+    "hints": [
+      "A generator keeps state between yields \u2014 no list needed.",
+      "itertools.islice slices any iterator."
+    ],
+    "solution": {
+      "code": "import sys\nfrom itertools import islice\n\ndef fib():\n    a, b = 0, 1\n    while True:\n        yield a\n        a, b = b, a + b\n\nn = int(sys.stdin.read().strip())\nprint(\" \".join(str(x) for x in islice(fib(), n)))",
+      "explanation": "yield suspends the function, making an infinite lazy sequence safe to define.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(1)"
+    },
+    "tags": [
+      "generators",
+      "yield"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "vocabulary",
+    "difficulty": "medium",
+    "title": "Call-Counting Decorator",
+    "description": "Write a decorator `count_calls` that counts invocations of the function it\nwraps (store the count on the wrapper, e.g. `wrapper.calls`). Apply it to a\nfunction, call the function `n` times, then print the recorded count.\n\n**Input**: a single integer `n`.\n\n**Output**: the call count.",
+    "constraints": "1 <= n <= 10^4",
+    "examples": [
+      {
+        "input": "3",
+        "output": "3",
+        "explanation": "Three calls recorded by the decorator."
+      },
+      {
+        "input": "1",
+        "output": "1",
+        "explanation": "A single call."
+      }
+    ],
+    "hints": [
+      "A decorator returns a replacement function that does bookkeeping, then delegates.",
+      "functools.wraps preserves the wrapped function's metadata."
+    ],
+    "solution": {
+      "code": "import sys\nfrom functools import wraps\n\ndef count_calls(func):\n    @wraps(func)\n    def wrapper(*args, **kwargs):\n        wrapper.calls += 1\n        return func(*args, **kwargs)\n    wrapper.calls = 0\n    return wrapper\n\n@count_calls\ndef greet():\n    return \"hi\"\n\nn = int(sys.stdin.read().strip())\nfor _ in range(n):\n    greet()\nprint(greet.calls)",
+      "explanation": "The closure owns mutable state (the counter) attached to the wrapper itself.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(1)"
+    },
+    "tags": [
+      "decorators",
+      "closures"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "builtins",
+    "difficulty": "easy",
+    "title": "Sort by Length, then Alphabet",
+    "description": "Sort words by length; break ties alphabetically. Use `sorted` with a key\nfunction \u2014 no manual sorting.\n\n**Input**: the words, space-separated, on one line.\n\n**Output**: the sorted words, space-separated.",
+    "constraints": "1 <= words <= 10^4; lowercase",
+    "examples": [
+      {
+        "input": "banana kiwi apple fig",
+        "output": "fig kiwi apple banana",
+        "explanation": "3, 4, 5, 6 letters."
+      },
+      {
+        "input": "bb aa",
+        "output": "aa bb",
+        "explanation": "Same length \u2014 alphabetical order decides."
+      }
+    ],
+    "hints": [
+      "A tuple key sorts by its elements in order: key=lambda w: (len(w), w)."
+    ],
+    "solution": {
+      "code": "import sys\n\nwords = sys.stdin.read().split()\nprint(\" \".join(sorted(words, key=lambda w: (len(w), w))))",
+      "explanation": "Tuple keys give lexicographic multi-criteria sorting for free.",
+      "time_complexity": "O(n log n)",
+      "space_complexity": "O(n)"
+    },
+    "tags": [
+      "sorted",
+      "key-functions"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "builtins",
+    "difficulty": "medium",
+    "title": "Top Three Words",
+    "description": "Print the three most frequent words. Order by count descending, then\nalphabetically. Use `collections.Counter`.\n\n**Input**: the text (lowercase words), on one line.\n\n**Output**: three lines of `word count`.",
+    "constraints": "At least 3 distinct words",
+    "examples": [
+      {
+        "input": "the cat and the hat and the bat",
+        "output": "the 3\nand 2\nbat 1",
+        "explanation": "bat, cat and hat all appear once \u2014 'bat' wins alphabetically."
+      },
+      {
+        "input": "b b a a c",
+        "output": "a 2\nb 2\nc 1",
+        "explanation": "a and b tie on 2; alphabetical order breaks it."
+      }
+    ],
+    "hints": [
+      "Counter counts in one line; sort its items with a (\u2212count, word) key."
+    ],
+    "solution": {
+      "code": "import sys\nfrom collections import Counter\n\ncounts = Counter(sys.stdin.read().split())\nranked = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))\nfor word, count in ranked[:3]:\n    print(word, count)",
+      "explanation": "Counter + a compound sort key handles frequency ranking with deterministic ties.",
+      "time_complexity": "O(n log n)",
+      "space_complexity": "O(n)"
+    },
+    "tags": [
+      "collections",
+      "counter"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "builtins",
+    "difficulty": "medium",
+    "title": "Numbered Score Report",
+    "description": "Combine parallel lists of names and scores into a numbered report using\n`zip` and `enumerate` (no index arithmetic).\n\n**Input**: line 1 \u2014 the names; line 2 \u2014 the scores (same count).\n\n**Output**: one line per entry: `{rank}. {name} {score}` with ranks from 1.",
+    "constraints": "1 <= entries <= 10^3",
+    "examples": [
+      {
+        "input": "Alice Bob\n90 85",
+        "output": "1. Alice 90\n2. Bob 85",
+        "explanation": "zip pairs the columns; enumerate numbers them."
+      },
+      {
+        "input": "Zoe\n77",
+        "output": "1. Zoe 77",
+        "explanation": "A single entry."
+      }
+    ],
+    "hints": [
+      "enumerate(zip(names, scores), start=1) yields (rank, (name, score))."
+    ],
+    "solution": {
+      "code": "import sys\n\nlines = sys.stdin.read().splitlines()\nnames = lines[0].split()\nscores = lines[1].split()\nfor rank, (name, score) in enumerate(zip(names, scores), start=1):\n    print(f\"{rank}. {name} {score}\")",
+      "explanation": "zip fuses parallel sequences; enumerate supplies the counter pythonically.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(1)"
+    },
+    "tags": [
+      "zip",
+      "enumerate"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "oop",
+    "difficulty": "easy",
+    "title": "Vector Addition with Dunders",
+    "description": "Implement a `Vector` class supporting `v1 + v2` via `__add__` and printing\nas `Vector(x, y)` via `__repr__`. Read two vectors and print their sum.\n\n**Input**: two lines, each `x y`.\n\n**Output**: `Vector(x, y)` for the sum.",
+    "constraints": "Integer components",
+    "examples": [
+      {
+        "input": "1 2\n3 4",
+        "output": "Vector(4, 6)",
+        "explanation": "(1+3, 2+4)."
+      },
+      {
+        "input": "-1 5\n1 -5",
+        "output": "Vector(0, 0)",
+        "explanation": "Components cancel."
+      }
+    ],
+    "hints": [
+      "__add__ returns a new Vector; __repr__ controls how print displays it."
+    ],
+    "solution": {
+      "code": "import sys\n\nclass Vector:\n    def __init__(self, x, y):\n        self.x, self.y = x, y\n\n    def __add__(self, other):\n        return Vector(self.x + other.x, self.y + other.y)\n\n    def __repr__(self):\n        return f\"Vector({self.x}, {self.y})\"\n\nlines = sys.stdin.read().splitlines()\na = Vector(*map(int, lines[0].split()))\nb = Vector(*map(int, lines[1].split()))\nprint(a + b)",
+      "explanation": "Dunder methods let user types participate in built-in syntax like + and print.",
+      "time_complexity": "O(1)",
+      "space_complexity": "O(1)"
+    },
+    "tags": [
+      "dunder-methods",
+      "classes"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "oop",
+    "difficulty": "medium",
+    "title": "Temperature as a Property",
+    "description": "Build a `Temperature` class that stores Celsius and exposes Fahrenheit as a\nread-only `@property` computing `C * 9 / 5 + 32`. Read a Celsius integer\nand print the Fahrenheit value as an integer.\n\n**Input**: an integer Celsius value.\n\n**Output**: the Fahrenheit value (integer).",
+    "constraints": "-273 <= C <= 10^4; inputs chosen so F is integral",
+    "examples": [
+      {
+        "input": "100",
+        "output": "212",
+        "explanation": "Boiling point."
+      },
+      {
+        "input": "0",
+        "output": "32",
+        "explanation": "Freezing point."
+      }
+    ],
+    "hints": [
+      "@property makes a method readable like an attribute \u2014 no parentheses at the call site."
+    ],
+    "solution": {
+      "code": "import sys\n\nclass Temperature:\n    def __init__(self, celsius):\n        self.celsius = celsius\n\n    @property\n    def fahrenheit(self):\n        return self.celsius * 9 // 5 + 32\n\nt = Temperature(int(sys.stdin.read().strip()))\nprint(t.fahrenheit)",
+      "explanation": "Properties compute derived values on access while keeping attribute syntax.",
+      "time_complexity": "O(1)",
+      "space_complexity": "O(1)"
+    },
+    "tags": [
+      "properties",
+      "classes"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "oop",
+    "difficulty": "medium",
+    "title": "Shapes with an Abstract Base",
+    "description": "Define an abstract `Shape` (using `abc.ABC` and `@abstractmethod area()`),\nwith `Rect` and `Circle` subclasses (use pi = 3.14159). Read shapes and\nprint each area with two decimals.\n\n**Input**: line 1 \u2014 the shape count `n`; next `n` lines \u2014 `rect w h` or\n`circle r`.\n\n**Output**: one line per shape: the area, two decimals.",
+    "constraints": "1 <= n <= 100; integer dimensions",
+    "examples": [
+      {
+        "input": "2\nrect 3 4\ncircle 1",
+        "output": "12.00\n3.14",
+        "explanation": "3*4 and pi*1^2."
+      },
+      {
+        "input": "1\ncircle 2",
+        "output": "12.57",
+        "explanation": "pi * 4 = 12.56636 -> 12.57."
+      }
+    ],
+    "hints": [
+      "An ABC cannot be instantiated; subclasses must implement every abstractmethod."
+    ],
+    "solution": {
+      "code": "import sys\nfrom abc import ABC, abstractmethod\n\nPI = 3.14159\n\nclass Shape(ABC):\n    @abstractmethod\n    def area(self):\n        ...\n\nclass Rect(Shape):\n    def __init__(self, w, h):\n        self.w, self.h = w, h\n\n    def area(self):\n        return self.w * self.h\n\nclass Circle(Shape):\n    def __init__(self, r):\n        self.r = r\n\n    def area(self):\n        return PI * self.r * self.r\n\nlines = sys.stdin.read().splitlines()\nn = int(lines[0])\nfor i in range(1, n + 1):\n    parts = lines[i].split()\n    if parts[0] == \"rect\":\n        shape = Rect(int(parts[1]), int(parts[2]))\n    else:\n        shape = Circle(int(parts[1]))\n    print(f\"{shape.area():.2f}\")",
+      "explanation": "ABCs enforce the interface; polymorphism dispatches area() per subclass.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(1)"
+    },
+    "tags": [
+      "abc",
+      "inheritance"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "threading",
+    "difficulty": "medium",
+    "title": "Thread-Safe Counter",
+    "description": "Spawn `t` threads that each increment a shared counter `m` times. Protect\nthe increment with a `threading.Lock` so the final value is exact, then\nprint it.\n\n**Input**: one line \u2014 `t m`.\n\n**Output**: the final counter value (`t * m`).",
+    "constraints": "1 <= t <= 16; 1 <= m <= 10^5",
+    "examples": [
+      {
+        "input": "4 1000",
+        "output": "4000",
+        "explanation": "Four threads x 1000 increments."
+      },
+      {
+        "input": "2 10",
+        "output": "20",
+        "explanation": "Small but still race-prone without a lock."
+      }
+    ],
+    "hints": [
+      "`+=` on a shared int is not atomic \u2014 wrap it in `with lock:`.",
+      "join() every thread before reading the result."
+    ],
+    "solution": {
+      "code": "import sys\nimport threading\n\nt, m = map(int, sys.stdin.read().split())\ncounter = 0\nlock = threading.Lock()\n\ndef work():\n    global counter\n    for _ in range(m):\n        with lock:\n            counter += 1\n\nthreads = [threading.Thread(target=work) for _ in range(t)]\nfor th in threads:\n    th.start()\nfor th in threads:\n    th.join()\nprint(counter)",
+      "explanation": "The lock serializes the read-modify-write so no increment is lost.",
+      "time_complexity": "O(t * m)",
+      "space_complexity": "O(t)"
+    },
+    "tags": [
+      "threading",
+      "locks"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "threading",
+    "difficulty": "medium",
+    "title": "Parallel Squares with Executors",
+    "description": "Square every input number using `concurrent.futures.ThreadPoolExecutor.map`,\nwhich preserves input order regardless of completion order.\n\n**Input**: the integers, space-separated, on one line.\n\n**Output**: the squares, space-separated, in input order.",
+    "constraints": "1 <= n <= 10^4",
+    "examples": [
+      {
+        "input": "1 2 3",
+        "output": "1 4 9",
+        "explanation": "Order matches the input."
+      },
+      {
+        "input": "5 -2",
+        "output": "25 4",
+        "explanation": "Negatives square positive."
+      }
+    ],
+    "hints": [
+      "executor.map is the drop-in parallel version of map \u2014 results come back in order."
+    ],
+    "solution": {
+      "code": "import sys\nfrom concurrent.futures import ThreadPoolExecutor\n\nnums = list(map(int, sys.stdin.read().split()))\nwith ThreadPoolExecutor(max_workers=4) as executor:\n    squares = list(executor.map(lambda x: x * x, nums))\nprint(\" \".join(map(str, squares)))",
+      "explanation": "The executor manages the pool; map keeps result order deterministic.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)"
+    },
+    "tags": [
+      "concurrent-futures",
+      "thread-pool"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "threading",
+    "difficulty": "medium",
+    "title": "Gathering Async Results",
+    "description": "Define an async function `double(i)` returning `i * 2`, launch one task per\n`i in range(n)` with `asyncio.gather`, and print the results in order.\n\n**Input**: a single integer `n`.\n\n**Output**: the doubled values `0 2 4 ...`, space-separated.",
+    "constraints": "1 <= n <= 10^4",
+    "examples": [
+      {
+        "input": "4",
+        "output": "0 2 4 6",
+        "explanation": "Doubles of 0..3."
+      },
+      {
+        "input": "1",
+        "output": "0",
+        "explanation": "A single task."
+      }
+    ],
+    "hints": [
+      "asyncio.gather awaits many coroutines concurrently and returns results in call order."
+    ],
+    "solution": {
+      "code": "import asyncio\nimport sys\n\nasync def double(i):\n    return i * 2\n\nasync def main(n):\n    results = await asyncio.gather(*(double(i) for i in range(n)))\n    print(\" \".join(map(str, results)))\n\nasyncio.run(main(int(sys.stdin.read().strip())))",
+      "explanation": "gather schedules all coroutines on the event loop and preserves ordering.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)"
+    },
+    "tags": [
+      "asyncio",
+      "coroutines"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "patterns",
+    "difficulty": "easy",
+    "title": "Singleton Settings",
+    "description": "Implement a `Settings` class as a singleton (override `__new__`). Store the\ninput value on one instance, create a second instance, and print whether\nthey are the same object plus the value read from the second.\n\n**Input**: one line \u2014 a value to store.\n\n**Output**: `True {value}`.",
+    "constraints": "Any single-token value",
+    "examples": [
+      {
+        "input": "42",
+        "output": "True 42",
+        "explanation": "Both variables reference one shared instance."
+      },
+      {
+        "input": "hello",
+        "output": "True hello",
+        "explanation": "Works for any stored value."
+      }
+    ],
+    "hints": [
+      "__new__ controls instance creation \u2014 return the cached instance if one exists."
+    ],
+    "solution": {
+      "code": "import sys\n\nclass Settings:\n    _instance = None\n\n    def __new__(cls):\n        if cls._instance is None:\n            cls._instance = super().__new__(cls)\n        return cls._instance\n\nvalue = sys.stdin.read().strip()\nfirst = Settings()\nfirst.value = value\nsecond = Settings()\nprint(second is first, second.value)",
+      "explanation": "Caching the instance in __new__ guarantees a single shared object.",
+      "time_complexity": "O(1)",
+      "space_complexity": "O(1)"
+    },
+    "tags": [
+      "singleton",
+      "design-patterns"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "patterns",
+    "difficulty": "medium",
+    "title": "Observer Broadcast",
+    "description": "Implement the observer pattern: a `Subject` with `attach(observer)` and\n`notify(message)`; each observer prints `observer{i}: {message}` when\nnotified. Attach `n` observers (numbered from 1) and send one message.\n\n**Input**: line 1 \u2014 the observer count `n`; line 2 \u2014 the message.\n\n**Output**: `n` lines, one per observer in attach order.",
+    "constraints": "1 <= n <= 100",
+    "examples": [
+      {
+        "input": "2\nhello",
+        "output": "observer1: hello\nobserver2: hello",
+        "explanation": "Both observers receive the event."
+      },
+      {
+        "input": "1\nship it",
+        "output": "observer1: ship it",
+        "explanation": "A single subscriber."
+      }
+    ],
+    "hints": [
+      "The subject stores observers in a list and loops over them on notify."
+    ],
+    "solution": {
+      "code": "import sys\n\nclass Observer:\n    def __init__(self, name):\n        self.name = name\n\n    def update(self, message):\n        print(f\"{self.name}: {message}\")\n\nclass Subject:\n    def __init__(self):\n        self._observers = []\n\n    def attach(self, observer):\n        self._observers.append(observer)\n\n    def notify(self, message):\n        for observer in self._observers:\n            observer.update(message)\n\nlines = sys.stdin.read().splitlines()\nn = int(lines[0])\nsubject = Subject()\nfor i in range(1, n + 1):\n    subject.attach(Observer(f\"observer{i}\"))\nsubject.notify(lines[1])",
+      "explanation": "The subject decouples publishers from subscribers via a simple registry.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)"
+    },
+    "tags": [
+      "observer",
+      "design-patterns"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "patterns",
+    "difficulty": "medium",
+    "title": "Strategy Calculator",
+    "description": "Implement the strategy pattern: map operation names to functions and\ndispatch each request through the mapping \u2014 no if/elif chain per operation.\nSupport `add`, `sub` and `mul`.\n\n**Input**: line 1 \u2014 the request count `n`; next `n` lines \u2014 `op a b`.\n\n**Output**: one result per line.",
+    "constraints": "1 <= n <= 100; integer operands",
+    "examples": [
+      {
+        "input": "2\nadd 2 3\nmul 4 5",
+        "output": "5\n20",
+        "explanation": "Each line dispatches to its strategy."
+      },
+      {
+        "input": "1\nsub 10 4",
+        "output": "6",
+        "explanation": "10 - 4."
+      }
+    ],
+    "hints": [
+      "A dict of callables is the idiomatic strategy registry in Python."
+    ],
+    "solution": {
+      "code": "import sys\n\nstrategies = {\n    \"add\": lambda a, b: a + b,\n    \"sub\": lambda a, b: a - b,\n    \"mul\": lambda a, b: a * b,\n}\n\nlines = sys.stdin.read().splitlines()\nn = int(lines[0])\nfor i in range(1, n + 1):\n    op, a, b = lines[i].split()\n    print(strategies[op](int(a), int(b)))",
+      "explanation": "Selecting behavior via a mapping keeps each strategy independent and testable.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(1)"
+    },
+    "tags": [
+      "strategy",
+      "design-patterns"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "version_control",
+    "difficulty": "easy",
+    "title": "Merge vs Rebase: Make the Call",
+    "description": "**Written-answer question** \u2014 type your answer in the editor; the AI coach\nreviews it (there are no test cases to run).\n\nYour feature branch is three commits ahead of `main`, and `main` has moved\non. A teammate has already pulled your feature branch. Should you `merge`\n`main` into your branch or `rebase` onto it? Explain your choice, what each\ncommand does to history, and the rule about rebasing shared branches.",
+    "constraints": "Aim for 4-8 sentences",
+    "examples": [],
+    "hints": [
+      "What does rebase do to the commit hashes of your branch?",
+      "Who else is affected if those hashes change?"
+    ],
+    "solution": {
+      "code": "",
+      "explanation": "Merge: creates a merge commit joining both histories; your branch's commits are untouched, so it is safe on shared branches at the cost of a busier graph. Rebase: replays your commits on top of main, rewriting them with new hashes for a linear history. Because a teammate has pulled the branch, rebasing would rewrite commits they already have, forcing conflicted force-pulls \u2014 so merge here. The rule: never rebase commits that others may have based work on; rebase freely on private branches.",
+      "time_complexity": "-",
+      "space_complexity": "-"
+    },
+    "tags": [
+      "git",
+      "merge",
+      "rebase",
+      "conceptual"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "version_control",
+    "difficulty": "medium",
+    "title": "Recover the Lost Commit",
+    "description": "**Written-answer question** \u2014 type your answer in the editor; the AI coach\nreviews it (there are no test cases to run).\n\nYou ran `git reset --hard HEAD~2` and realized the two discarded commits\ncontained work you need. The commits are no longer reachable from any\nbranch. Explain step by step how you would recover them and why this works.",
+    "constraints": "Aim for 4-8 sentences",
+    "examples": [],
+    "hints": [
+      "Deleted commits are rarely gone immediately \u2014 what log does git keep of where HEAD has been?",
+      "Once you find the right hash, how do you make a branch point at it?"
+    ],
+    "solution": {
+      "code": "",
+      "explanation": "git reflog lists every position HEAD has occupied, including the pre-reset commit. Find the entry from before the reset (e.g. HEAD@{1}), inspect it with git show, then recover with git reset --hard <hash> (or safer: git branch rescue <hash> to keep the current state). This works because reset only moves the branch pointer \u2014 the commit objects remain in the object database until garbage collection, and the reflog keeps them reachable for ~90 days by default.",
+      "time_complexity": "-",
+      "space_complexity": "-"
+    },
+    "tags": [
+      "git",
+      "reflog",
+      "recovery",
+      "conceptual"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "python_fundamentals",
+    "subcategory": "version_control",
+    "difficulty": "medium",
+    "title": "The Force-Push Incident",
+    "description": "**Written-answer question** \u2014 type your answer in the editor; the AI coach\nreviews it (there are no test cases to run).\n\nA teammate ran `git push --force` on a shared branch and erased two of your\npushed commits. Explain (1) what force-push did to the remote branch,\n(2) how you can restore your commits from your local clone, and (3) what\nthe team should use instead of `--force` to prevent a repeat.",
+    "constraints": "Aim for 5-10 sentences",
+    "examples": [],
+    "hints": [
+      "Your local clone still has the erased commits \u2014 where?",
+      "There is a force variant that refuses to overwrite commits it hasn't seen."
+    ],
+    "solution": {
+      "code": "",
+      "explanation": "(1) Force-push replaced the remote branch pointer with the teammate's local one, discarding any commits not in their history \u2014 the remote now tells everyone else to rewind. (2) Your local branch (or reflog) still contains the erased commits: create a branch on them (git branch rescue <hash>), merge or cherry-pick them back, and push normally. (3) Use git push --force-with-lease, which aborts if the remote has commits you haven't fetched, and protect shared branches server-side so force-pushes are rejected outright.",
+      "time_complexity": "-",
+      "space_complexity": "-"
+    },
+    "tags": [
+      "git",
+      "force-push",
+      "recovery",
+      "conceptual"
+    ]
+  }
+]

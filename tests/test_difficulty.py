@@ -161,3 +161,21 @@ class TestAreaIdentification:
     def test_empty_scores(self):
         assert get_weak_areas([]) == []
         assert get_strong_areas([]) == []
+
+
+class TestPeekPenalty:
+    def test_no_peeks_no_penalty(self):
+        from codepractice.core.difficulty import apply_peek_penalty
+        assert apply_peek_penalty(0.8, 0) == 0.8
+
+    def test_each_peek_costs_five_percent(self):
+        from codepractice.core.difficulty import apply_peek_penalty
+        assert round(apply_peek_penalty(0.8, 2), 2) == 0.7
+
+    def test_penalty_floors_at_zero(self):
+        from codepractice.core.difficulty import apply_peek_penalty
+        assert apply_peek_penalty(0.2, 10) == 0.0
+
+    def test_penalty_can_flip_pass_to_fail(self):
+        from codepractice.core.difficulty import apply_peek_penalty
+        assert apply_peek_penalty(0.72, 1) < 0.7

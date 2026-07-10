@@ -2,12 +2,14 @@
 
 Features planned for future iterations, roughly ordered by impact.
 
-> **Source of truth:** This roadmap is aspirational and may include ideas not yet
-> released. For shipped capabilities, rely on `README.md` and in-app commands.
+> **Where things live:** this roadmap is the long-range plan and may include
+> ideas not yet released. [`NEXT_SPRINT.md`](NEXT_SPRINT.md) is the actionable
+> queue, [`CHANGELOG.md`](CHANGELOG.md) records what has shipped, and
+> [`README.md`](README.md) documents current capabilities.
 
 ---
 
-## Shipped (as of 2026-05-22)
+## Shipped (as of 2026-07-08)
 
 ### ✅ Implemented — Offline Problem Cache
 - `codepractice prefetch --count N` warms and stores generated problems.
@@ -38,51 +40,60 @@ Features planned for future iterations, roughly ordered by impact.
 - JD/Resume flows can generate non-coding interview questions.
 - Draft answers persist via `question_drafts`.
 
+### ✅ Implemented — Interview Simulation Mode
+- Timed, no-hints sessions from the Dashboard with countdown timer,
+  peek-penalty tracking, early finish, and end-of-session scorecard.
+- Stored with `session_type = "interview_simulation"` for clean analytics.
+
+### ✅ Implemented — Goal Evolution Tracking
+- `goal_history` table, `codepractice goal "..."` CLI command,
+  "Update Goal" action on the Learning Plan screen, and a goal-drift
+  panel on the Progress screen.
+
+### ✅ Implemented — Deterministic Test-Case Verification (2026-07-08)
+- Test cases verify actual output vs `expected_output`; guardrails cap/floor
+  LLM scores; offline scoring from real results; per-case results panel.
+
+### ✅ Implemented — Gamification: XP & Achievements (2026-07-08)
+- XP by difficulty × score with speed/no-hint bonuses, 8 level tiers,
+  18 achievements with unlock toasts, Progress-screen gallery + XP chart.
+
+### ✅ Implemented — Problem Bookmarking & My Library (2026-07-08)
+- Star toggle (`B`), filterable library screen, side-by-side comparison of
+  your best solution vs the AI-optimal solution.
+
+### ✅ Implemented — Cloud LLM Backends (2026-07-08)
+- `LLM_BACKEND=anthropic` (official SDK) or `openai`-compatible endpoints;
+  API keys env-only; local-first remains the default.
+
+### ✅ Implemented — Company-Specific Prep Profiles (2026-07-08)
+- Bundled profiles for 10 companies, searchable browser, one-click
+  targeted plan (LLM or deterministic fallback), JD-flow enrichment.
+
+### ✅ Implemented — Custom Problem Creation (2026-07-08)
+- New Problem form, `source='custom'`, inclusion in practice/review,
+  `codepractice export-problems` / `import-problems`.
+
+### ✅ Implemented — Multi-Language Practice (2026-07-08)
+- JavaScript and Go runners with verified test cases, language selector +
+  per-language highlighting, per-attempt language tracking.
+
+### ✅ Implemented — Code-Runner Resource Limits (2026-07-08)
+- Submitted code runs under POSIX rlimits: CPU time, address space
+  (language-aware), max written file size, no core dumps.
+
 ---
 
 ## Near-Term
 
-### Interview Simulation Mode
-A timed, no-hints practice mode that mirrors real interview conditions.
-- Configurable session length (20 / 45 / 90 min)
-- Countdown timer widget in the header (green → yellow → red)
-- Hint button disabled; peeking at hints counts against score
-- Problems drawn from job description or company profile
-- Final scorecard with pass/fail verdict and category breakdown
-- Stored separately from regular practice sessions for clean analytics
-
-### Gamification — XP & Achievements
-Keeps motivation high across long preparation streaks.
-- XP earned per problem solved, scaled by difficulty + score
-- Level thresholds with titles (e.g. "Intern" → "Staff Engineer")
-- 15+ defined achievements:
-  - First Solve, 7-Day Streak, Perfect Score, Speed Demon (< 5 min)
-  - DSA Master (solve all 10 patterns), Pythonista, Plan Finisher, …
-- Toast notification on unlock via Textual's `notify()`
-- Achievement gallery on the Progress screen
-- XP history chart on the Progress screen
-
-### Goal Evolution Tracking
-Makes the learning plan truly adaptive over time.
-- `goal_history` DB table: timestamped NL goal statements + plan summaries
-- `codepractice goal "I want to focus more on system design now"` CLI command
-- "Update Goal" button on the Learning Plan screen
-- LLM reads full goal history to evolve the plan, explaining what changed
-- Week-over-week goal drift summary in the Progress screen
+### Full Sandbox Isolation
+Resource limits shipped; true isolation is still open.
+- No-network execution and restricted filesystem visibility
+  (namespaces/seccomp on Linux, sandbox-exec on macOS)
 
 ---
 
 ## Medium-Term
-
-### Company-Specific Prep Profiles
-Tailored problem sets for specific employers.
-- `data/companies.json` — FAANG and top-tier companies with:
-  - Common interview patterns (e.g. Amazon = OOP + behavioural, Google = graphs + DP)
-  - Typical round structure and time limits
-  - Difficulty distribution and known focuses
-- Company browser screen with search
-- One-click "Prepare for this company" → creates a targeted learning plan
-- Integrates with Job Description screen for combined prep
 
 ### MCP Job-Search Tool Integration
 Connects the app to live job market data.
@@ -101,21 +112,55 @@ Reduces friction for users who live in modal editors.
 
 ---
 
+## Big Bets
+
+Larger directional investments that would change what the product *is*,
+not just add to it.
+
+### AI Mock Interviewer
+The single biggest differentiator vs. LeetCode-style grinding: a
+conversational interviewer persona wrapped around the existing practice loop.
+- Interviewer introduces the problem verbally, answers clarifying questions
+- Follow-up probes: "What's the time complexity?", "Can you optimize space?"
+- Interruptions and hints modeled on real interviewer behaviour
+- Post-session transcript + rubric evaluation (communication, correctness,
+  optimization, testing instincts)
+- Builds directly on chat_service + interview simulation mode
+
+### Behavioural Interview Track
+Freeform question generation already exists — extend it to a full track.
+- STAR-format answer coaching with per-dimension rubric scoring
+- Question banks by seniority and role type
+- Draft answers evolve across attempts; spaced repetition for stories
+
+### System Design Track
+Text-based system design practice, LLM-evaluated.
+- Prompt bank (design a URL shortener, rate limiter, news feed …)
+- Structured answer template (requirements → estimates → API → data → scaling)
+- LLM rubric evaluation with follow-up questions
+- Ties into learning plans and company profiles for senior-role prep
+
+### Job Application Tracker
+The repo is called *job-search-cli* — close the loop from practice to search.
+- Track applications: company, role, stage, dates, contacts, outcomes
+- Link each application to its JD prep, company profile, and sim sessions
+- Pipeline view + reminders for follow-ups
+- Turns the app from "interview prep" into an end-to-end job-search companion
+
+### Distribution & Release Engineering
+- Publish to PyPI (`pipx install codepractice`) — packaging, versioning,
+  changelog, and license shipped in 0.2.0; the upload pipeline remains
+- Ratchet CI coverage gate up from 40% toward 70%
+- Screenshots/asciinema demo in README for discoverability
+
+---
+
 ## Longer-Term
 
-### Multiple Language Support
-Extend beyond Python to other common interview languages.
-- JavaScript / TypeScript (Node.js runner)
-- Go, Rust, Java stubs
-- Language selector per problem; LLM evaluation adapts to chosen language
-- Syntax highlighting theme per language in the code editor
-
-### Problem Bookmarking & Solution Library
-Save and revisit favourite problems and solutions.
-- Bookmark button on every problem card
-- "My Library" screen with bookmarked problems and user solutions
-- Filter by tag, difficulty, category
-- Compare user solution vs AI-optimal solution side-by-side
+### Additional Language Runners
+JavaScript and Go shipped 2026-07-08 — extend the runner registry further.
+- TypeScript (tsx), Rust, and Java adapters
+- Language-specific starter stubs per problem
 
 ### Daily Reminder / Notification System
 Nudges users to keep their streak alive.
@@ -134,10 +179,6 @@ Lightweight social accountability.
 - Opt-in telemetry uploads solve rate, avg score, and streak (no code)
 - "How do you compare?" section on the Progress screen
 - Percentile rank among users at the same experience level
-
-### Custom Problem Creation
-Let users define their own drill problems.
-- "New Problem" form in the TUI (title, description, examples, hints, solution)
-- Stored with `source = "custom"` in the DB
-- Included in random problem selection and review queue
-- Export custom problems to JSON for sharing
+- ⚠️ Requires a hosted backend, which cuts against the "no data sent to the
+  cloud" promise in the README — needs a deliberate privacy design (or a
+  local-only "compare against published percentiles" variant) before pickup.

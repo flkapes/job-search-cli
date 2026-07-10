@@ -1,0 +1,171 @@
+[
+  {
+    "source": "static",
+    "category": "practical",
+    "subcategory": "parsing",
+    "difficulty": "easy",
+    "title": "Log Level Report",
+    "description": "Summarize a log by severity. Each log line starts with `ERROR`, `WARN` or\n`INFO` followed by a message.\n\n**Input**: line 1 \u2014 the line count `n`; next `n` lines \u2014 the log lines.\n\n**Output**: one line \u2014 `ERROR=x WARN=y INFO=z`.",
+    "constraints": "1 <= n <= 10^4",
+    "examples": [
+      {
+        "input": "3\nERROR db down\nINFO started\nERROR retry failed",
+        "output": "ERROR=2 WARN=0 INFO=1",
+        "explanation": "Two errors, no warnings, one info."
+      },
+      {
+        "input": "1\nWARN disk 90%",
+        "output": "ERROR=0 WARN=1 INFO=0",
+        "explanation": "A single warning."
+      }
+    ],
+    "hints": [
+      "split(maxsplit=1) or startswith cleanly separates the level from the message."
+    ],
+    "solution": {
+      "code": "import sys\n\nlines = sys.stdin.read().splitlines()\nn = int(lines[0])\ncounts = {\"ERROR\": 0, \"WARN\": 0, \"INFO\": 0}\nfor i in range(1, n + 1):\n    level = lines[i].split(maxsplit=1)[0]\n    if level in counts:\n        counts[level] += 1\nprint(f\"ERROR={counts['ERROR']} WARN={counts['WARN']} INFO={counts['INFO']}\")",
+      "explanation": "Count by first token; a fixed dict keeps output order stable.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(1)"
+    },
+    "tags": [
+      "parsing",
+      "logs"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "practical",
+    "subcategory": "parsing",
+    "difficulty": "easy",
+    "title": "Deduplicate, Preserve Order",
+    "description": "Remove duplicate words while keeping the first occurrence of each in its\noriginal position.\n\n**Input**: the words, space-separated, on one line.\n\n**Output**: the deduplicated words, space-separated.",
+    "constraints": "1 <= n <= 10^5",
+    "examples": [
+      {
+        "input": "a b a c b",
+        "output": "a b c",
+        "explanation": "Later repeats are dropped."
+      },
+      {
+        "input": "x x x",
+        "output": "x",
+        "explanation": "One survivor."
+      }
+    ],
+    "hints": [
+      "dict.fromkeys preserves insertion order and is the one-line idiom for this."
+    ],
+    "solution": {
+      "code": "import sys\n\nwords = sys.stdin.read().split()\nprint(\" \".join(dict.fromkeys(words)))",
+      "explanation": "Dictionaries remember insertion order, giving ordered dedup for free.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)"
+    },
+    "tags": [
+      "deduplication"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "practical",
+    "subcategory": "data",
+    "difficulty": "medium",
+    "title": "CSV Column Average",
+    "description": "Compute the average of the score column in `name,score` records, printed\nwith exactly two decimals.\n\n**Input**: line 1 \u2014 the record count `n`; next `n` lines \u2014 `name,score`.\n\n**Output**: the average, two decimals.",
+    "constraints": "1 <= n <= 10^4; integer scores",
+    "examples": [
+      {
+        "input": "3\nalice,90\nbob,80\ncarol,92",
+        "output": "87.33",
+        "explanation": "262 / 3 = 87.333..."
+      },
+      {
+        "input": "2\nd,10\ne,11",
+        "output": "10.50",
+        "explanation": "21 / 2."
+      }
+    ],
+    "hints": [
+      "Split each row on the comma; format with an f-string `:.2f`."
+    ],
+    "solution": {
+      "code": "import sys\n\nlines = sys.stdin.read().splitlines()\nn = int(lines[0])\ntotal = sum(int(lines[i].split(\",\")[1]) for i in range(1, n + 1))\nprint(f\"{total / n:.2f}\")",
+      "explanation": "Parse, accumulate, and let format specifiers own the rounding.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(1)"
+    },
+    "tags": [
+      "csv",
+      "parsing"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "practical",
+    "subcategory": "data",
+    "difficulty": "medium",
+    "title": "JSON Path Lookup",
+    "description": "Read a JSON object and a dot-separated key path, and print the value found\nat that path using the `json` module.\n\n**Input**: line 1 \u2014 a JSON object; line 2 \u2014 the path (e.g. `a.b`).\n\n**Output**: the value at the path.",
+    "constraints": "Paths always resolve; values are strings or integers",
+    "examples": [
+      {
+        "input": "{\"a\": {\"b\": 5}}\na.b",
+        "output": "5",
+        "explanation": "obj['a']['b']."
+      },
+      {
+        "input": "{\"user\": {\"name\": \"kim\", \"id\": 7}}\nuser.name",
+        "output": "kim",
+        "explanation": "Nested string value."
+      }
+    ],
+    "hints": [
+      "json.loads gives nested dicts; reduce over path.split('.') walks them."
+    ],
+    "solution": {
+      "code": "import json\nimport sys\n\nlines = sys.stdin.read().splitlines()\nobj = json.loads(lines[0])\nvalue = obj\nfor key in lines[1].split(\".\"):\n    value = value[key]\nprint(value)",
+      "explanation": "Deserialize once, then walk the dictionary chain key by key.",
+      "time_complexity": "O(depth)",
+      "space_complexity": "O(size)"
+    },
+    "tags": [
+      "json",
+      "parsing"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "practical",
+    "subcategory": "intervals",
+    "difficulty": "medium",
+    "title": "Merge the Meetings",
+    "description": "Merge overlapping meeting intervals (touching intervals like `[1,4]` and\n`[4,5]` merge too).\n\n**Input**: line 1 \u2014 the interval count `n`; next `n` lines \u2014 `start end`.\n\n**Output**: the merged intervals in order, one `start end` per line.",
+    "constraints": "1 <= n <= 10^4; 0 <= start <= end <= 10^6",
+    "examples": [
+      {
+        "input": "4\n1 3\n2 6\n8 10\n15 18",
+        "output": "1 6\n8 10\n15 18",
+        "explanation": "[1,3] and [2,6] overlap."
+      },
+      {
+        "input": "2\n1 4\n4 5",
+        "output": "1 5",
+        "explanation": "Touching endpoints merge."
+      }
+    ],
+    "hints": [
+      "Sort by start; extend the current interval while the next one starts inside it."
+    ],
+    "solution": {
+      "code": "import sys\n\nlines = sys.stdin.read().splitlines()\nn = int(lines[0])\nintervals = sorted(tuple(map(int, lines[i].split())) for i in range(1, n + 1))\n\nmerged = [list(intervals[0])]\nfor start, end in intervals[1:]:\n    if start <= merged[-1][1]:\n        merged[-1][1] = max(merged[-1][1], end)\n    else:\n        merged.append([start, end])\nprint(\"\\n\".join(f\"{s} {e}\" for s, e in merged))",
+      "explanation": "After sorting, one pass suffices: extend or start a new block.",
+      "time_complexity": "O(n log n)",
+      "space_complexity": "O(n)"
+    },
+    "tags": [
+      "intervals",
+      "sorting"
+    ]
+  }
+]

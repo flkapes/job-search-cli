@@ -11,6 +11,7 @@ from textual.containers import Container, Horizontal
 from codepractice.db.database import get_db
 from codepractice.db.repositories import (
     ChatHistoryRepository,
+    GamificationRepository,
     GoalHistoryRepository,
     LearningPlanRepository,
     ProblemRepository,
@@ -55,6 +56,7 @@ class CodePracticeApp(App):
         self.plan_repo = LearningPlanRepository(self.db)
         self.chat_repo = ChatHistoryRepository(self.db)
         self.goal_history_repo = GoalHistoryRepository(self.db)
+        self.gamification_repo = GamificationRepository(self.db)
         self._llm: LLMClient | None = None
         self._llm_online = False
 
@@ -74,13 +76,28 @@ class CodePracticeApp(App):
             )
         else:
             self._llm = get_client()
-        self._check_llm_status()
 
-    def _check_llm_status(self) -> None:
-        try:
-            self._llm_online = self.llm.health_check()
-        except Exception:
-            self._llm_online = False
+    def refresh_llm_status(self) -> None:
+        """Probe backend health on a worker thread — cloud backends do a
+        network round-trip, which must not block the UI (or startup)."""
+        llm = self.llm
+
+        def _probe() -> None:
+            try:
+                online = llm.health_check()
+            except Exception:
+                online = False
+
+            def _apply() -> None:
+                self._llm_online = online
+                try:
+                    self.query_one(AppHeader).llm_online = online
+                except Exception:
+                    pass
+
+            self.call_from_thread(_apply)
+
+        self.run_worker(_probe, thread=True, exclusive=True, group="llm-health")
 
     def seed_problems(self) -> None:
         """Seed static problems on first run."""
@@ -94,9 +111,7 @@ class CodePracticeApp(App):
     def on_mount(self) -> None:
         self.seed_problems()
         self._init_llm()
-        # Update header LLM indicator
-        header = self.query_one(AppHeader)
-        header.llm_online = self._llm_online
+        self.refresh_llm_status()
 
     def compose(self) -> ComposeResult:
         yield AppHeader()
@@ -151,12 +166,21 @@ class CodePracticeApp(App):
         elif name == "job_desc":
             from codepractice.tui.screens.job_desc import JobDescContent
             return JobDescContent()
+        elif name == "companies":
+            from codepractice.tui.screens.companies import CompaniesContent
+            return CompaniesContent()
         elif name == "learning_plan":
             from codepractice.tui.screens.learning_plan import LearningPlanContent
             return LearningPlanContent()
         elif name == "chat":
             from codepractice.tui.screens.chat import ChatContent
             return ChatContent()
+        elif name == "library":
+            from codepractice.tui.screens.library import LibraryContent
+            return LibraryContent()
+        elif name == "create_problem":
+            from codepractice.tui.screens.create_problem import CreateProblemContent
+            return CreateProblemContent()
         elif name == "progress":
             from codepractice.tui.screens.progress import ProgressContent
             return ProgressContent()

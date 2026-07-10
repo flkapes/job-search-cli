@@ -11,25 +11,38 @@ def evaluate_prompt(
     user_code: str,
     user_explanation: str,
     test_results: str = "",
+    language: str = "python",
 ) -> list[dict]:
     examples_str = "\n".join(
         f"  Input: {e.input}\n  Output: {e.output}"
         for e in problem.examples[:3]
     )
 
+    style_line = (
+        "4. Style and Pythonic quality notes"
+        if language == "python"
+        else f"4. Style and idiomatic {language.title()} quality notes"
+    )
+    test_note = (
+        "\nDeterministic test results are authoritative for correctness: "
+        "code that FAILS test cases must not be scored as passing."
+        if test_results
+        else ""
+    )
+
     return [
         system_message(
-            """When evaluating code, stream your response in this order:
+            f"""When evaluating code, stream your response in this order:
 1. Quick verdict: ✓ Correct / ~ Partial / ✗ Incorrect
 2. Correctness analysis (does it handle all cases?)
 3. Time/space complexity breakdown
-4. Style and Pythonic quality notes
+{style_line}
 5. Specific improvements with short code examples
-6. On the LAST LINE output ONLY this JSON: {"score": 0.85, "passed": true}
-   (score 0.0-1.0, passed = score >= 0.7)"""
+6. On the LAST LINE output ONLY this JSON: {{"score": 0.85, "passed": true}}
+   (score 0.0-1.0, passed = score >= 0.7){test_note}"""
         ),
         user_message(
-            f"""Evaluate this solution:
+            f"""Evaluate this solution (written in {language}):
 
 **Problem:** {problem.title}
 {problem.description[:800]}
@@ -38,7 +51,7 @@ def evaluate_prompt(
 {examples_str}
 
 **User's Code:**
-```python
+```{language}
 {user_code}
 ```
 

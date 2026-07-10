@@ -11,13 +11,14 @@ from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.reactive import reactive
 from textual.widget import Widget
-from textual.widgets import Button, Label, Static
+from textual.widgets import Button, Label, Select, Static
 
 from codepractice.core.models import Problem
 from codepractice.core.spaced_repetition import get_due_problems, update_schedule
 from codepractice.tui.widgets.code_editor import CodeEditor
 from codepractice.tui.widgets.problem_card import ProblemCard
 from codepractice.tui.widgets.streaming_output import StreamingOutput
+from codepractice.utils.languages import available_languages
 
 
 class Phase(str, Enum):
@@ -64,6 +65,13 @@ class PracticeContent(Widget):
         padding: 1;
     }
 
+    /* Stable region for streamed feedback — content scrolls inside instead
+       of the panel growing and relayouting the screen on every line. */
+    PracticeContent #feedback-stream {
+        height: 1fr;
+        max-height: 100%;
+    }
+
     PracticeContent #phase-loading {
         height: 1fr;
         content-align: center middle;
@@ -81,6 +89,7 @@ class PracticeContent(Widget):
     BINDINGS = [
         Binding("h", "show_hint", "Hint", show=True),
         Binding("n", "next_problem", "Next", show=True),
+        Binding("b", "toggle_bookmark", "Bookmark", show=True),
         Binding("ctrl+enter", "submit_code", "Submit", show=False),
         Binding("escape", "back_to_problem", "Back", show=False),
     ]
@@ -95,19 +104,50 @@ class PracticeContent(Widget):
     _init_session_type: str = "free"
     _drill_category: str | None = None
     _drill_subcategory: str | None = None
+    _drill_difficulty: str | None = None
     _simulation_mode: bool = False
     _simulation_duration_sec: int = 0
     _simulation_deadline: datetime | None = None
     _simulation_locked: bool = False
     _peek_attempts: int = 0
+    _sim_problem_index: int = 0
+    _language: str = "python"
 
-    def __init__(self, review_mode: bool = False, simulation_mode: bool = False, simulation_duration_sec: int = 1800, **kwargs):
+    def _effective_difficulty(self) -> str | None:
+        """Difficulty for the next problem — simulations alternate medium/hard."""
+        if self._simulation_mode:
+            difficulty = "medium" if self._sim_problem_index % 2 == 0 else "hard"
+            self._sim_problem_index += 1
+            return difficulty
+        return self._drill_difficulty
+
+    def __init__(
+        self,
+        review_mode: bool = False,
+        simulation_mode: bool = False,
+        simulation_duration_sec: int = 1800,
+        session_type: str | None = None,
+        drill_category: str | None = None,
+        drill_subcategory: str | None = None,
+        drill_difficulty: str | None = None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self._review_mode = review_mode
         self._simulation_mode = simulation_mode
         self._simulation_duration_sec = simulation_duration_sec if simulation_mode else 0
         if simulation_mode:
             self._init_session_type = "interview_simulation"
+            # Simulations mirror real interviews: DSA only, medium/hard mix.
+            self._drill_category = "dsa"
+        elif session_type:
+            self._init_session_type = session_type
+        if drill_category:
+            self._drill_category = drill_category
+        if drill_subcategory:
+            self._drill_subcategory = drill_subcategory
+        if drill_difficulty:
+            self._drill_difficulty = drill_difficulty
 
     def compose(self) -> ComposeResult:
         with Horizontal(id="practice-top-bar"):
@@ -135,10 +175,17 @@ class PracticeContent(Widget):
                 with Horizontal(classes="action-bar"):
                     yield Button("Submit [Ctrl+Enter]", id="btn-submit", classes="primary-btn")
                     yield Button("Back [Esc]", id="btn-back-problem", classes="secondary-btn")
+                    yield Select(
+                        [(spec.name, spec.id) for spec in available_languages()],
+                        value=self._language,
+                        id="language-select",
+                        allow_blank=False,
+                    )
 
         # Phase: Feedback
         with Vertical(id="phase-feedback"):
             yield Label("[bold]Evaluation[/bold]", classes="panel-title")
+            yield Static("", id="test-results-panel")
             yield StreamingOutput(id="feedback-stream")
             yield Static("", id="diff-panel")
             with Horizontal(id="rating-bar"):
@@ -166,6 +213,7 @@ class PracticeContent(Widget):
         if phase == "feedback":
             try:
                 self.query_one("#diff-panel", Static).update("")
+                self.query_one("#test-results-panel", Static).update("")
                 self.query_one("#rating-bar").display = True
             except Exception:
                 pass
@@ -186,9 +234,11 @@ class PracticeContent(Widget):
             self._session_id = self.app.session_repo.start_session(session_type, metadata=metadata)
         except Exception:
             self._session_id = None
-        cat = getattr(self, "_drill_category", None)
-        sub = getattr(self, "_drill_subcategory", None)
-        self._load_next_problem(category=cat, subcategory=sub)
+        self._load_next_problem(
+            category=self._drill_category,
+            subcategory=self._drill_subcategory,
+            difficulty=self._effective_difficulty(),
+        )
 
     def _load_next_problem(
         self,
@@ -218,16 +268,24 @@ class PracticeContent(Widget):
             self._show_problem()
         else:
             # Try AI generation
-            self._generate_ai_problem(category, difficulty)
+            self._generate_ai_problem(category, difficulty, subcategory)
 
-    def _generate_ai_problem(self, category: str | None, difficulty: str | None) -> None:
+    def _generate_ai_problem(
+        self,
+        category: str | None,
+        difficulty: str | None,
+        subcategory: str | None = None,
+    ) -> None:
         try:
             from codepractice.llm.services.problem_generator import ProblemGeneratorService
             gen = ProblemGeneratorService(self.app.llm)
-            problem = gen.generate_python_fundamental(
-                "Python Fundamentals", category or "vocabulary",
-                difficulty or "medium"
-            )
+            if category == "dsa":
+                problem = gen.generate_dsa(subcategory or "two_pointers", difficulty or "medium")
+            else:
+                problem = gen.generate_python_fundamental(
+                    "Python Fundamentals", subcategory or "vocabulary",
+                    difficulty or "medium"
+                )
             if problem:
                 # Save to DB
                 pid = self.app.problem_repo.create(problem.to_db())
@@ -246,6 +304,10 @@ class PracticeContent(Widget):
         )
         self._show_problem()
 
+    # Categories whose problems are language-agnostic; python_fundamentals
+    # problems are Python-specific by definition, so the selector locks there.
+    _MULTI_LANGUAGE_CATEGORIES = ("dsa", "practical")
+
     def _show_problem(self) -> None:
         if not self._problem:
             return
@@ -255,7 +317,21 @@ class PracticeContent(Widget):
         finish_btn = self.query_one("#btn-finish-sim", Button)
         hint_btn.disabled = self._simulation_mode
         finish_btn.display = self._simulation_mode
+        self._gate_language_selector()
         self._show_phase("problem")
+
+    def _gate_language_selector(self) -> None:
+        """Offer language choice only where the problem isn't language-specific."""
+        try:
+            selector = self.query_one("#language-select", Select)
+            allowed = self._problem.category in self._MULTI_LANGUAGE_CATEGORIES
+            selector.display = allowed and len(available_languages()) > 1
+            if not allowed and self._language != "python":
+                self._language = "python"
+                selector.value = "python"
+                self.query_one("#code-editor", CodeEditor).set_language("python")
+        except Exception:
+            pass
 
     # ── Actions ────────────────────────────────────────────────────────────────
 
@@ -291,10 +367,22 @@ class PracticeContent(Widget):
     def on_code_editor_code_submitted(self, event: CodeEditor.CodeSubmitted) -> None:
         self.action_submit_code()
 
+    def on_select_changed(self, event: Select.Changed) -> None:
+        if event.select.id == "language-select" and event.value:
+            self._language = str(event.value)
+            try:
+                self.query_one("#code-editor", CodeEditor).set_language(self._language)
+            except Exception:
+                pass
+
     def _enter_coding(self) -> None:
         self._code_start_time = time.time()
         editor = self.query_one("#code-editor", CodeEditor)
         editor.clear()
+        try:
+            editor.set_language(self._language)
+        except Exception:
+            pass
         self._show_phase("coding")
         editor.query_one("#code-input").focus()
 
@@ -322,15 +410,49 @@ class PracticeContent(Widget):
         try:
             from codepractice.llm.services.answer_evaluator import AnswerEvaluatorService
             evaluator = AnswerEvaluatorService(self.app.llm)
-            full_text = stream.stream_sync(
-                evaluator.stream_evaluation(self._problem, code)
-            )
 
+            verification_holder: dict = {"verification": None}
+            problem, language = self._problem, self._language
+
+            def evaluation_stream():
+                # Runs lazily on the streaming worker thread: subprocess-based
+                # verification and LLM tokens both stay off the UI thread.
+                try:
+                    verification = evaluator.verify(problem, code, language=language)
+                    verification_holder["verification"] = verification
+                    self.app.call_from_thread(self._show_test_results, verification)
+                except Exception:
+                    verification = None
+                yield from evaluator.stream_evaluation(
+                    problem, code, verification=verification, language=language
+                )
+
+            stream.stream_in_worker(
+                evaluation_stream(),
+                on_complete=lambda full_text: self._finish_evaluation(
+                    full_text, verification_holder["verification"], code, elapsed
+                ),
+                on_error=lambda e: stream.show_error(f"Evaluation failed: {e}"),
+            )
+        except Exception as e:
+            stream.show_error(f"Evaluation failed: {e}")
+
+    def _finish_evaluation(self, full_text: str, verification, code: str, elapsed: int) -> None:
+        """Post-stream bookkeeping — runs on the UI thread once tokens finish."""
+        stream = self.query_one("#feedback-stream", StreamingOutput)
+        try:
             # Parse score from response and record attempt
             from codepractice.llm.client import extract_json
             score_data = extract_json(full_text.split("\n")[-1]) if full_text else None
             score = float(score_data.get("score", 0.5)) if isinstance(score_data, dict) else 0.5
             passed = bool(score_data.get("passed", score >= 0.7)) if isinstance(score_data, dict) else score >= 0.7
+
+            # Guardrails: the LLM can't pass code that fails its test cases
+            try:
+                from codepractice.utils.code_runner import clamp_score
+                score, passed = clamp_score(score, passed, verification)
+            except Exception:
+                pass
 
             if self._session_id and self._problem and self._problem.id:
                 self._last_attempt_id = self.app.session_repo.record_attempt({
@@ -342,6 +464,7 @@ class PracticeContent(Widget):
                     "time_spent_sec": elapsed,
                     "hints_used": self._hints_used,
                     "passed": passed,
+                    "language": self._language,
                 })
                 if passed:
                     self.app.problem_repo.increment_solved(self._problem.id)
@@ -351,6 +474,7 @@ class PracticeContent(Widget):
                     update_schedule(self.app.db, self._problem.id, score)
                 except Exception:
                     pass
+                self._award_rewards(score, passed, elapsed)
 
             # Show optimized solution diff if score < 0.9
             try:
@@ -372,6 +496,63 @@ class PracticeContent(Widget):
         except Exception as e:
             stream.show_error(f"Evaluation failed: {e}")
 
+    def _award_rewards(self, score: float, passed: bool, elapsed: int) -> None:
+        """Award XP and surface achievement unlock toasts for the last attempt."""
+        try:
+            from codepractice.core.gamification import award_attempt, level_for_xp
+            xp, new_achievements = award_attempt(
+                self.app.gamification_repo,
+                self.app.session_repo,
+                self._problem,
+                self._last_attempt_id,
+                score,
+                passed,
+                time_spent_sec=elapsed,
+                hints_used=self._hints_used,
+            )
+            if xp:
+                info = level_for_xp(self.app.gamification_repo.total_xp())
+                self.notify(
+                    f"+{xp} XP  —  Level {info.level}: {info.title}",
+                    title="XP earned",
+                    timeout=4,
+                )
+            for a in new_achievements:
+                self.notify(
+                    f"{a.icon} {a.name} — {a.description}",
+                    title="Achievement unlocked!",
+                    severity="information",
+                    timeout=8,
+                )
+        except Exception:
+            pass
+
+    def _show_test_results(self, verification) -> None:
+        """Render the per-test-case verification table in the feedback phase."""
+        panel = self.query_one("#test-results-panel", Static)
+        if verification is None or verification.total == 0:
+            panel.update("")
+            return
+        lines = ["[bold]Test Cases[/bold]"]
+        for i, r in enumerate(verification.results, 1):
+            if not r.comparable:
+                lines.append(f"  [dim]○ Case {i}: not verifiable via stdout[/dim]")
+            elif r.passed:
+                lines.append(f"  [#3fb950]✓ Case {i}: passed[/#3fb950] [dim]({r.runtime_ms:.0f}ms)[/dim]")
+            elif r.error:
+                lines.append(f"  [#f85149]✗ Case {i}: {r.error}[/#f85149]")
+            else:
+                lines.append(
+                    f"  [#f85149]✗ Case {i}: expected [bold]{r.expected[:60]}[/bold], "
+                    f"got [bold]{r.actual[:60] or '(nothing)'}[/bold][/#f85149]"
+                )
+        if verification.comparable:
+            color = "#3fb950" if verification.all_passed else "#f85149"
+            lines.append(
+                f"  [{color}]{verification.passed}/{verification.comparable} verified cases passed[/{color}]"
+            )
+        panel.update("\n".join(lines))
+
     def action_show_hint(self) -> None:
         if self._simulation_mode:
             self._peek_attempts += 1
@@ -386,10 +567,28 @@ class PracticeContent(Widget):
         if hint:
             self._hints_used += 1
 
+    def action_toggle_bookmark(self) -> None:
+        try:
+            card = self.query_one("#problem-display", ProblemCard)
+            state = card.toggle_bookmark()
+            if state is not None:
+                self.query_one("#problem-mini", ProblemCard)._refresh_bookmark_button()
+                self.notify(
+                    "Bookmarked — find it in My Library" if state else "Bookmark removed",
+                    timeout=3,
+                )
+        except Exception:
+            pass
+
     def action_next_problem(self) -> None:
         if self._simulation_locked:
             return
-        self._load_next_problem()
+        # Preserve drill filters so "Next" stays inside the chosen track
+        self._load_next_problem(
+            category=self._drill_category,
+            subcategory=self._drill_subcategory,
+            difficulty=self._effective_difficulty(),
+        )
 
     def action_back_to_problem(self) -> None:
         if self.current_phase == "coding":
@@ -440,13 +639,24 @@ class PracticeContent(Widget):
             self._show_scorecard(card)
 
     def _show_scorecard(self, card: dict) -> None:
-        avg_pct = int(float(card.get("avg_score", 0.0)) * 100)
+        from codepractice.core.difficulty import apply_peek_penalty
+
+        raw_avg = float(card.get("avg_score", 0.0))
+        adjusted = apply_peek_penalty(raw_avg, self._peek_attempts)
+        avg_pct = int(adjusted * 100)
         verdict = "PASS" if avg_pct >= 70 else "FAIL"
         lines = [
             "[bold]Interview Simulation Complete[/bold]",
             f"Attempted: {card.get('attempted', 0)}",
             f"Solved: {card.get('solved', 0)}",
-            f"Average score: {avg_pct}%",
+            f"Average score: {int(raw_avg * 100)}%",
+        ]
+        if self._peek_attempts:
+            lines.append(
+                f"Hint peeks: {self._peek_attempts} "
+                f"(-{self._peek_attempts * 5}% → final {avg_pct}%)"
+            )
+        lines += [
             f"Verdict: [bold]{verdict}[/bold]",
             "Category breakdown:",
         ]

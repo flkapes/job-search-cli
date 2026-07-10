@@ -101,14 +101,13 @@ class PythonTrackContent(Widget):
             self._start_drill(topic_id, str(difficulty))
 
     def _start_drill(self, topic_id: str, difficulty: str) -> None:
-        """Switch to practice mode with this topic pre-selected."""
-        # We use the app's content switching with a hint about what to practice
+        """Switch to practice mode drilling the selected topic."""
         from codepractice.tui.screens.practice import PracticeContent
         content = self.app.query_one("#content")
         content.remove_children()
-        widget = PracticeContent()
-        content.mount(widget)
-        # After mounting, load a topic-specific problem
-        widget.call_later(
-            lambda: widget._load_next_problem(category="python_fundamentals", difficulty=difficulty)
-        )
+        content.mount(PracticeContent(
+            session_type="python",
+            drill_category="python_fundamentals",
+            drill_subcategory=topic_id,
+            drill_difficulty=difficulty or None,
+        ))

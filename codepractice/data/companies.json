@@ -1,0 +1,300 @@
+{
+  "last_reviewed": "2026-07",
+  "companies": [
+    {
+      "id": "google",
+      "name": "Google",
+      "aliases": [
+        "alphabet"
+      ],
+      "patterns": [
+        "dynamic_programming",
+        "bfs",
+        "dfs",
+        "binary_search",
+        "heap"
+      ],
+      "focus_areas": [
+        "Graph and DP algorithm design",
+        "Clean, scalable code",
+        "Complexity analysis out loud",
+        "Googleyness & leadership behavioral round"
+      ],
+      "difficulty_distribution": {
+        "easy": 0.1,
+        "medium": 0.5,
+        "hard": 0.4
+      },
+      "rounds": [
+        "Phone screen: 45 min, 1-2 coding questions",
+        "Onsite: 4-5 rounds \u2014 3 coding, 1 system design (L4+), 1 behavioral"
+      ],
+      "typical_time_limit_min": 45,
+      "notes": "Expect follow-ups pushing you toward optimal complexity. Interviewers grade on problem-solving process, not just the final answer."
+    },
+    {
+      "id": "meta",
+      "name": "Meta",
+      "aliases": [
+        "facebook",
+        "instagram",
+        "whatsapp"
+      ],
+      "patterns": [
+        "two_pointers",
+        "bfs",
+        "dfs",
+        "heap",
+        "sliding_window"
+      ],
+      "focus_areas": [
+        "Speed \u2014 two problems per 45-min round",
+        "Trees/graphs and string manipulation",
+        "Product-sense system design",
+        "Signal-focused behavioral (jedi) round"
+      ],
+      "difficulty_distribution": {
+        "easy": 0.15,
+        "medium": 0.6,
+        "hard": 0.25
+      },
+      "rounds": [
+        "Phone screen: 45 min, 2 coding questions",
+        "Onsite: 2 coding rounds (2 questions each), 1 design, 1 behavioral"
+      ],
+      "typical_time_limit_min": 45,
+      "notes": "Pace matters more than anywhere else \u2014 practice solving mediums in under 15 minutes with clean code on the first pass."
+    },
+    {
+      "id": "amazon",
+      "name": "Amazon",
+      "aliases": [
+        "aws"
+      ],
+      "patterns": [
+        "two_pointers",
+        "bfs",
+        "sliding_window",
+        "heap",
+        "union_find"
+      ],
+      "focus_areas": [
+        "OOP design and maintainable code",
+        "Leadership Principles behavioral stories (STAR)",
+        "Practical data-structure problems",
+        "System design with AWS-style tradeoffs"
+      ],
+      "difficulty_distribution": {
+        "easy": 0.2,
+        "medium": 0.6,
+        "hard": 0.2
+      },
+      "rounds": [
+        "Online assessment: 2 coding + work simulation",
+        "Onsite loop: 4-5 rounds, every round includes Leadership Principles questions",
+        "Bar-raiser round"
+      ],
+      "typical_time_limit_min": 40,
+      "notes": "Half of every interview is behavioral \u2014 prepare 2 STAR stories per Leadership Principle and expect deep follow-up probing."
+    },
+    {
+      "id": "apple",
+      "name": "Apple",
+      "aliases": [],
+      "patterns": [
+        "two_pointers",
+        "binary_search",
+        "dfs",
+        "monotonic_stack"
+      ],
+      "focus_areas": [
+        "Depth in your domain (teams hire directly)",
+        "Memory/performance awareness",
+        "Practical debugging",
+        "Passion for the product line"
+      ],
+      "difficulty_distribution": {
+        "easy": 0.2,
+        "medium": 0.6,
+        "hard": 0.2
+      },
+      "rounds": [
+        "Phone screen with the hiring team",
+        "Onsite: 4-6 team-specific rounds mixing coding, domain, and design"
+      ],
+      "typical_time_limit_min": 45,
+      "notes": "Interviews vary by team more than any other FAANG \u2014 research the specific team's stack and expect domain questions alongside DSA."
+    },
+    {
+      "id": "microsoft",
+      "name": "Microsoft",
+      "aliases": [
+        "azure",
+        "github"
+      ],
+      "patterns": [
+        "binary_search",
+        "dfs",
+        "dynamic_programming",
+        "prefix_sum"
+      ],
+      "focus_areas": [
+        "Classic DSA fundamentals",
+        "Collaborative problem solving \u2014 think out loud",
+        "System design (SDE II+)",
+        "Growth-mindset behavioral questions"
+      ],
+      "difficulty_distribution": {
+        "easy": 0.25,
+        "medium": 0.55,
+        "hard": 0.2
+      },
+      "rounds": [
+        "Phone screen: 30-45 min coding",
+        "Onsite/virtual loop: 4 rounds \u2014 coding, design, behavioral, as-appropriate round"
+      ],
+      "typical_time_limit_min": 45,
+      "notes": "Interviewers act as collaborators \u2014 engage them, take hints gracefully, and narrate your reasoning throughout."
+    },
+    {
+      "id": "netflix",
+      "name": "Netflix",
+      "aliases": [],
+      "patterns": [
+        "heap",
+        "sliding_window",
+        "dynamic_programming",
+        "union_find"
+      ],
+      "focus_areas": [
+        "Senior-level system design at streaming scale",
+        "Culture-memo alignment (candor, context over control)",
+        "Practical coding over puzzles",
+        "Judgment and ownership stories"
+      ],
+      "difficulty_distribution": {
+        "easy": 0.1,
+        "medium": 0.55,
+        "hard": 0.35
+      },
+      "rounds": [
+        "Recruiter + hiring manager screens",
+        "Onsite: mixed coding/design/culture rounds, heavier on design and culture for senior roles"
+      ],
+      "typical_time_limit_min": 60,
+      "notes": "Hires almost exclusively senior engineers \u2014 expect scenario questions probing judgment, candor, and independent ownership."
+    },
+    {
+      "id": "stripe",
+      "name": "Stripe",
+      "aliases": [],
+      "patterns": [
+        "two_pointers",
+        "prefix_sum",
+        "sliding_window",
+        "dfs"
+      ],
+      "focus_areas": [
+        "Practical, real-world coding (parsing, APIs, money math)",
+        "Integration debugging round",
+        "Correctness and edge cases over algorithmic tricks",
+        "Clear written communication"
+      ],
+      "difficulty_distribution": {
+        "easy": 0.2,
+        "medium": 0.65,
+        "hard": 0.15
+      },
+      "rounds": [
+        "Phone screen: practical coding",
+        "Onsite: coding, integration/debugging in a real codebase, system design, hiring-manager chat"
+      ],
+      "typical_time_limit_min": 50,
+      "notes": "Famously practical: multi-part problems that grow like real requirements. Tests, edge cases, and readable code beat clever one-liners."
+    },
+    {
+      "id": "airbnb",
+      "name": "Airbnb",
+      "aliases": [],
+      "patterns": [
+        "dfs",
+        "union_find",
+        "sliding_window",
+        "dynamic_programming"
+      ],
+      "focus_areas": [
+        "Compiling, runnable code (they execute it)",
+        "Cross-functional collaboration",
+        "Core-values behavioral rounds",
+        "Product-minded system design"
+      ],
+      "difficulty_distribution": {
+        "easy": 0.1,
+        "medium": 0.6,
+        "hard": 0.3
+      },
+      "rounds": [
+        "Phone screen: 1 coding question, code must run",
+        "Onsite: 2 coding, 1 design, 2 values/experience rounds"
+      ],
+      "typical_time_limit_min": 45,
+      "notes": "Code is executed, not whiteboarded \u2014 practice writing complete, runnable programs with real test cases."
+    },
+    {
+      "id": "uber",
+      "name": "Uber",
+      "aliases": [],
+      "patterns": [
+        "bfs",
+        "heap",
+        "sliding_window",
+        "union_find"
+      ],
+      "focus_areas": [
+        "Graph/geo-flavored problems",
+        "High-QPS system design",
+        "Execution speed and pragmatism",
+        "Ownership behavioral questions"
+      ],
+      "difficulty_distribution": {
+        "easy": 0.15,
+        "medium": 0.6,
+        "hard": 0.25
+      },
+      "rounds": [
+        "Phone screen: 45 min coding",
+        "Onsite: 2 coding, 1 system design, 1 behavioral/hiring manager"
+      ],
+      "typical_time_limit_min": 45,
+      "notes": "Expect problems with maps, routing, and dispatch flavors \u2014 BFS on grids and heap-based scheduling come up repeatedly."
+    },
+    {
+      "id": "databricks",
+      "name": "Databricks",
+      "aliases": [],
+      "patterns": [
+        "heap",
+        "dynamic_programming",
+        "binary_search",
+        "monotonic_stack"
+      ],
+      "focus_areas": [
+        "Hard algorithmic problems",
+        "Distributed-systems design depth",
+        "Performance reasoning (big data scale)",
+        "Technical depth over breadth"
+      ],
+      "difficulty_distribution": {
+        "easy": 0.05,
+        "medium": 0.45,
+        "hard": 0.5
+      },
+      "rounds": [
+        "Phone screen: 1 hard coding question",
+        "Onsite: 2-3 coding, 1-2 systems design deep dives"
+      ],
+      "typical_time_limit_min": 60,
+      "notes": "One of the highest coding bars in the industry \u2014 drill hard-difficulty DP and heap problems under time pressure."
+    }
+  ]
+}

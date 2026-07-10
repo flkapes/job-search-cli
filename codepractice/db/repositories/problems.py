@@ -101,6 +101,55 @@ class ProblemRepository(BaseRepository):
             count += 1
         return count
 
+    def get_by_source(self, source: str) -> list[dict]:
+        rows = self._execute(
+            "SELECT * FROM problems WHERE source = ? ORDER BY created_at DESC", (source,)
+        )
+        return [self._parse_row(r) for r in rows if r]
+
+    def set_bookmark(self, problem_id: int, bookmarked: bool) -> None:
+        """Bookmark or un-bookmark a problem."""
+        if bookmarked:
+            self._update(
+                "UPDATE problems SET bookmarked_at = CURRENT_TIMESTAMP WHERE id = ?",
+                (problem_id,),
+            )
+        else:
+            self._update(
+                "UPDATE problems SET bookmarked_at = NULL WHERE id = ?",
+                (problem_id,),
+            )
+
+    def is_bookmarked(self, problem_id: int) -> bool:
+        row = self._execute_one(
+            "SELECT bookmarked_at FROM problems WHERE id = ?", (problem_id,)
+        )
+        return bool(row and row["bookmarked_at"])
+
+    def get_bookmarked(
+        self,
+        category: str | None = None,
+        difficulty: str | None = None,
+        tag: str | None = None,
+    ) -> list[dict]:
+        """Bookmarked problems, newest bookmark first, with optional filters."""
+        conditions = ["bookmarked_at IS NOT NULL"]
+        params: list = []
+        if category:
+            conditions.append("category = ?")
+            params.append(category)
+        if difficulty:
+            conditions.append("difficulty = ?")
+            params.append(difficulty)
+        if tag:
+            conditions.append("tags_json LIKE ?")
+            params.append(f'%"{tag}"%')
+        rows = self._execute(
+            f"SELECT * FROM problems WHERE {' AND '.join(conditions)} ORDER BY bookmarked_at DESC",
+            tuple(params),
+        )
+        return [self._parse_row(r) for r in rows if r]
+
     def save_note(self, problem_id: int, text: str) -> None:
         """Persist freeform user notes for a problem."""
         self._update(

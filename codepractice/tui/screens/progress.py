@@ -126,6 +126,12 @@ class ProgressContent(Widget):
             yield Label("[bold #58a6ff]📊 Your Progress[/bold #58a6ff]\n")
             yield StatsRow(id="progress-stats")
 
+            yield Label("\n[bold]Level & XP[/bold]", classes="panel-title")
+            yield Static("", id="xp-panel", classes="chart-panel")
+
+            yield Label("\n[bold]Achievements[/bold]", classes="panel-title")
+            yield Static("", id="achievements-gallery", classes="chart-panel")
+
             yield Label("\n[bold]30-Day Activity[/bold]", classes="panel-title")
             yield Static("", id="activity-chart", classes="chart-panel")
 
@@ -147,11 +153,56 @@ class ProgressContent(Widget):
 
     def _load_all(self) -> None:
         self._load_stats()
+        self._load_xp()
+        self._load_achievements()
         self._load_activity()
         self._load_mastery()
         self._load_sessions()
         self._load_weak_areas()
         self._load_goal_history()
+
+    def _load_xp(self) -> None:
+        try:
+            from codepractice.core.gamification import level_for_xp
+            total = self.app.gamification_repo.total_xp()
+            info = level_for_xp(total)
+            bar = build_progress_bar(int(info.progress_to_next * 100), 100, width=24)
+            if info.next_threshold is not None:
+                next_line = f"{info.xp}/{info.next_threshold} XP to next level"
+            else:
+                next_line = "Max level reached!"
+            lines = [
+                f"[bold #bc8cff]Level {info.level} — {info.title}[/bold #bc8cff]",
+                f"  [#bc8cff]{bar}[/#bc8cff]  {next_line}",
+            ]
+
+            history = self.app.gamification_repo.xp_by_day(14)
+            if history:
+                max_xp = max(d.get("xp", 0) for d in history) or 1
+                lines.append("\n[bold]XP — last 14 days[/bold]")
+                for d in history:
+                    day_str = str(d.get("day", "?"))[-5:]
+                    xp = d.get("xp", 0)
+                    bar_width = int((xp / max_xp) * 30) if max_xp else 0
+                    lines.append(f"  {day_str} [#bc8cff]{'█' * bar_width}[/#bc8cff] {xp}")
+            self.query_one("#xp-panel", Static).update("\n".join(lines))
+        except Exception:
+            pass
+
+    def _load_achievements(self) -> None:
+        try:
+            from codepractice.core.gamification import ACHIEVEMENTS
+            unlocked = self.app.gamification_repo.unlocked_keys()
+            lines = []
+            for a in ACHIEVEMENTS:
+                if a.key in unlocked:
+                    lines.append(f"  {a.icon} [bold #3fb950]{a.name}[/bold #3fb950] — {a.description}")
+                else:
+                    lines.append(f"  [dim]🔒 {a.name} — {a.description}[/dim]")
+            header = f"[#8b949e]{len(unlocked)}/{len(ACHIEVEMENTS)} unlocked[/#8b949e]\n"
+            self.query_one("#achievements-gallery", Static).update(header + "\n".join(lines))
+        except Exception:
+            pass
 
     def _load_stats(self) -> None:
         try:
@@ -302,14 +353,11 @@ class ProgressContent(Widget):
             from codepractice.tui.screens.practice import PracticeContent
             content = self.app.query_one("#content")
             content.remove_children()
-            widget = PracticeContent()
-            content.mount(widget)
-            # start_session with weak_area_drill type
-            widget._init_session_type = "weak_area_drill"
-            if cat:
-                widget._drill_category = cat
-                widget._drill_subcategory = sub
-            widget.call_later(widget._init_session)
+            content.mount(PracticeContent(
+                session_type="weak_area_drill",
+                drill_category=cat,
+                drill_subcategory=sub,
+            ))
         except Exception:
             pass
 

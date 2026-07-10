@@ -1,0 +1,342 @@
+[
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "two_pointers",
+    "difficulty": "medium",
+    "title": "Container With Most Water",
+    "description": "Vertical lines of the given heights stand on the x-axis. Choose two that,\nwith the x-axis, contain the most water.\n\n**Input**: the heights, space-separated, on one line.\n\n**Output**: the maximum area.",
+    "constraints": "2 <= n <= 10^5; 0 <= height <= 10^4",
+    "examples": [
+      {
+        "input": "1 8 6 2 5 4 8 3 7",
+        "output": "49",
+        "explanation": "Lines at indices 1 and 8: min(8,7) * 7 = 49."
+      },
+      {
+        "input": "1 1",
+        "output": "1",
+        "explanation": "min(1,1) * 1 = 1."
+      }
+    ],
+    "hints": [
+      "Start with the widest container.",
+      "Moving the taller side inward can never help \u2014 always move the shorter one."
+    ],
+    "solution": {
+      "code": "import sys\n\nheights = list(map(int, sys.stdin.read().split()))\ni, j = 0, len(heights) - 1\nbest = 0\nwhile i < j:\n    best = max(best, min(heights[i], heights[j]) * (j - i))\n    if heights[i] < heights[j]:\n        i += 1\n    else:\n        j -= 1\nprint(best)",
+      "explanation": "Two pointers from the ends; the shorter wall bounds the area, so advance it.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(1)"
+    },
+    "tags": [
+      "arrays",
+      "two-pointers"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "sliding_window",
+    "difficulty": "medium",
+    "title": "Longest Substring Without Repeats",
+    "description": "Find the length of the longest substring that contains no repeated character.\n\n**Input**: one line \u2014 the string (lowercase letters).\n\n**Output**: the length of the longest such substring.",
+    "constraints": "1 <= len(s) <= 10^5",
+    "examples": [
+      {
+        "input": "abcabcbb",
+        "output": "3",
+        "explanation": "'abc' has length 3."
+      },
+      {
+        "input": "bbbbb",
+        "output": "1",
+        "explanation": "Only 'b'."
+      }
+    ],
+    "hints": [
+      "Grow the window right; when a repeat enters, shrink from the left past its previous position."
+    ],
+    "solution": {
+      "code": "import sys\n\ns = sys.stdin.read().strip()\nlast_seen = {}\nleft = 0\nbest = 0\nfor right, ch in enumerate(s):\n    if ch in last_seen and last_seen[ch] >= left:\n        left = last_seen[ch] + 1\n    last_seen[ch] = right\n    best = max(best, right - left + 1)\nprint(best)",
+      "explanation": "A moving window plus a last-seen index map keeps every character unique inside the window.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(min(n, alphabet))"
+    },
+    "tags": [
+      "strings",
+      "sliding-window"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "binary_search",
+    "difficulty": "medium",
+    "title": "Search a Rotated Sorted Array",
+    "description": "A sorted array of distinct integers was rotated at an unknown pivot. Find\nthe target's index in O(log n).\n\n**Input**: line 1 \u2014 the rotated array; line 2 \u2014 the target.\n\n**Output**: the 0-based index, or `-1`.",
+    "constraints": "1 <= n <= 10^5; all values distinct",
+    "examples": [
+      {
+        "input": "4 5 6 7 0 1 2\n0",
+        "output": "4",
+        "explanation": "0 sits at index 4."
+      },
+      {
+        "input": "4 5 6 7 0 1 2\n3",
+        "output": "-1",
+        "explanation": "3 is absent."
+      }
+    ],
+    "hints": [
+      "One half of any split is always sorted \u2014 check whether the target lies inside it."
+    ],
+    "solution": {
+      "code": "import sys\n\nlines = sys.stdin.read().splitlines()\nnums = list(map(int, lines[0].split()))\ntarget = int(lines[1])\n\nlo, hi = 0, len(nums) - 1\nanswer = -1\nwhile lo <= hi:\n    mid = (lo + hi) // 2\n    if nums[mid] == target:\n        answer = mid\n        break\n    if nums[lo] <= nums[mid]:  # left half sorted\n        if nums[lo] <= target < nums[mid]:\n            hi = mid - 1\n        else:\n            lo = mid + 1\n    else:  # right half sorted\n        if nums[mid] < target <= nums[hi]:\n            lo = mid + 1\n        else:\n            hi = mid - 1\nprint(answer)",
+      "explanation": "Standard binary search, but decide which half is sorted before discarding one.",
+      "time_complexity": "O(log n)",
+      "space_complexity": "O(1)"
+    },
+    "tags": [
+      "arrays",
+      "binary-search"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "bfs",
+    "difficulty": "medium",
+    "title": "Rotting Oranges",
+    "description": "In a grid, `0` is empty, `1` a fresh orange, `2` a rotten one. Every minute\nrot spreads to 4-directionally adjacent fresh oranges. Compute how many\nminutes pass until no fresh orange remains.\n\n**Input**: line 1 \u2014 `rows cols`; next `rows` lines \u2014 the grid values,\nspace-separated.\n\n**Output**: the minutes needed, or `-1` if some orange can never rot.",
+    "constraints": "1 <= rows, cols <= 100",
+    "examples": [
+      {
+        "input": "3 3\n2 1 1\n1 1 0\n0 1 1",
+        "output": "4",
+        "explanation": "Rot reaches the last orange after 4 minutes."
+      },
+      {
+        "input": "3 3\n2 1 1\n0 1 1\n1 0 1",
+        "output": "-1",
+        "explanation": "The bottom-left orange is unreachable."
+      }
+    ],
+    "hints": [
+      "Multi-source BFS: seed the queue with every rotten orange at minute 0."
+    ],
+    "solution": {
+      "code": "import sys\nfrom collections import deque\n\nlines = sys.stdin.read().splitlines()\nrows, cols = map(int, lines[0].split())\ngrid = [list(map(int, lines[1 + r].split())) for r in range(rows)]\n\nqueue = deque()\nfresh = 0\nfor r in range(rows):\n    for c in range(cols):\n        if grid[r][c] == 2:\n            queue.append((r, c, 0))\n        elif grid[r][c] == 1:\n            fresh += 1\n\nminutes = 0\nwhile queue:\n    r, c, t = queue.popleft()\n    minutes = max(minutes, t)\n    for dr, dc in ((1, 0), (-1, 0), (0, 1), (0, -1)):\n        nr, nc = r + dr, c + dc\n        if 0 <= nr < rows and 0 <= nc < cols and grid[nr][nc] == 1:\n            grid[nr][nc] = 2\n            fresh -= 1\n            queue.append((nr, nc, t + 1))\nprint(minutes if fresh == 0 else -1)",
+      "explanation": "Breadth-first spread from all sources simultaneously tracks the wavefront time.",
+      "time_complexity": "O(rows * cols)",
+      "space_complexity": "O(rows * cols)"
+    },
+    "tags": [
+      "grid",
+      "bfs"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "dfs",
+    "difficulty": "medium",
+    "title": "Count the Islands",
+    "description": "Count islands (4-directionally connected groups of `1`s) in a binary grid.\n\n**Input**: line 1 \u2014 `rows cols`; next `rows` lines \u2014 the grid values,\nspace-separated.\n\n**Output**: the number of islands.",
+    "constraints": "1 <= rows, cols <= 300",
+    "examples": [
+      {
+        "input": "4 5\n1 1 0 0 0\n1 1 0 0 0\n0 0 1 0 0\n0 0 0 1 1",
+        "output": "3",
+        "explanation": "Three separate groups of land."
+      },
+      {
+        "input": "1 3\n0 0 0",
+        "output": "0",
+        "explanation": "All water."
+      }
+    ],
+    "hints": [
+      "Scan every cell; when you find unvisited land, flood-fill it and count one island."
+    ],
+    "solution": {
+      "code": "import sys\n\nlines = sys.stdin.read().splitlines()\nrows, cols = map(int, lines[0].split())\ngrid = [list(map(int, lines[1 + r].split())) for r in range(rows)]\n\ndef flood(sr, sc):\n    stack = [(sr, sc)]\n    grid[sr][sc] = 0\n    while stack:\n        r, c = stack.pop()\n        for dr, dc in ((1, 0), (-1, 0), (0, 1), (0, -1)):\n            nr, nc = r + dr, c + dc\n            if 0 <= nr < rows and 0 <= nc < cols and grid[nr][nc] == 1:\n                grid[nr][nc] = 0\n                stack.append((nr, nc))\n\nislands = 0\nfor r in range(rows):\n    for c in range(cols):\n        if grid[r][c] == 1:\n            islands += 1\n            flood(r, c)\nprint(islands)",
+      "explanation": "Iterative DFS flood fill sinks each island exactly once.",
+      "time_complexity": "O(rows * cols)",
+      "space_complexity": "O(rows * cols)"
+    },
+    "tags": [
+      "grid",
+      "dfs"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "dynamic_programming",
+    "difficulty": "medium",
+    "title": "Coin Change",
+    "description": "Given coin denominations (unlimited supply) and an amount, compute the\nfewest coins that make the amount exactly.\n\n**Input**: line 1 \u2014 the denominations; line 2 \u2014 the amount.\n\n**Output**: the minimum coin count, or `-1` if impossible.",
+    "constraints": "1 <= coins <= 12 values; 0 <= amount <= 10^4",
+    "examples": [
+      {
+        "input": "1 2 5\n11",
+        "output": "3",
+        "explanation": "11 = 5 + 5 + 1."
+      },
+      {
+        "input": "2\n3",
+        "output": "-1",
+        "explanation": "Odd amounts are unreachable with only 2s."
+      }
+    ],
+    "hints": [
+      "dp[a] = 1 + min(dp[a - coin]) over all coins that fit."
+    ],
+    "solution": {
+      "code": "import sys\n\nlines = sys.stdin.read().splitlines()\ncoins = list(map(int, lines[0].split()))\namount = int(lines[1])\n\nINF = float(\"inf\")\ndp = [0] + [INF] * amount\nfor a in range(1, amount + 1):\n    for coin in coins:\n        if coin <= a and dp[a - coin] + 1 < dp[a]:\n            dp[a] = dp[a - coin] + 1\nprint(dp[amount] if dp[amount] != INF else -1)",
+      "explanation": "Bottom-up unbounded knapsack over amounts.",
+      "time_complexity": "O(amount * coins)",
+      "space_complexity": "O(amount)"
+    },
+    "tags": [
+      "dp"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "heap",
+    "difficulty": "medium",
+    "title": "Kth Largest Element",
+    "description": "Find the k-th largest element (by sorted order, not distinct values)\nwithout fully sorting the array.\n\n**Input**: line 1 \u2014 the integers; line 2 \u2014 `k`.\n\n**Output**: the k-th largest value.",
+    "constraints": "1 <= k <= n <= 10^5",
+    "examples": [
+      {
+        "input": "3 2 1 5 6 4\n2",
+        "output": "5",
+        "explanation": "Sorted descending: 6 5 ... \u2014 the 2nd is 5."
+      },
+      {
+        "input": "3 2 3 1 2 4 5 5 6\n4",
+        "output": "4",
+        "explanation": "Descending: 6 5 5 4 \u2014 the 4th is 4."
+      }
+    ],
+    "hints": [
+      "Keep a min-heap of size k: its root is always the k-th largest so far."
+    ],
+    "solution": {
+      "code": "import heapq\nimport sys\n\nlines = sys.stdin.read().splitlines()\nnums = list(map(int, lines[0].split()))\nk = int(lines[1])\n\nheap = []\nfor x in nums:\n    heapq.heappush(heap, x)\n    if len(heap) > k:\n        heapq.heappop(heap)\nprint(heap[0])",
+      "explanation": "A bounded min-heap of size k discards everything smaller than the top k.",
+      "time_complexity": "O(n log k)",
+      "space_complexity": "O(k)"
+    },
+    "tags": [
+      "heap"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "prefix_sum",
+    "difficulty": "medium",
+    "title": "Subarrays Summing to K",
+    "description": "Count contiguous subarrays whose elements sum exactly to `k`.\n\n**Input**: line 1 \u2014 the integers (may be negative); line 2 \u2014 `k`.\n\n**Output**: the number of qualifying subarrays.",
+    "constraints": "1 <= n <= 10^5; values may be negative",
+    "examples": [
+      {
+        "input": "1 1 1\n2",
+        "output": "2",
+        "explanation": "[1,1] appears twice."
+      },
+      {
+        "input": "1 2 3\n3",
+        "output": "2",
+        "explanation": "[1,2] and [3]."
+      }
+    ],
+    "hints": [
+      "A running prefix sum plus a hash map of previously seen sums counts matches in one pass."
+    ],
+    "solution": {
+      "code": "import sys\nfrom collections import defaultdict\n\nlines = sys.stdin.read().splitlines()\nnums = list(map(int, lines[0].split()))\nk = int(lines[1])\n\nseen = defaultdict(int)\nseen[0] = 1\nrunning = 0\ncount = 0\nfor x in nums:\n    running += x\n    count += seen[running - k]\n    seen[running] += 1\nprint(count)",
+      "explanation": "sum(l..r) == k exactly when prefix[r] - prefix[l-1] == k; count matching earlier prefixes.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)"
+    },
+    "tags": [
+      "arrays",
+      "prefix-sum",
+      "hash-map"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "monotonic_stack",
+    "difficulty": "medium",
+    "title": "Daily Temperatures",
+    "description": "For each day, output how many days you must wait for a strictly warmer\ntemperature (`0` if it never gets warmer).\n\n**Input**: the temperatures, space-separated, on one line.\n\n**Output**: the wait in days for each position, space-separated.",
+    "constraints": "1 <= n <= 10^5",
+    "examples": [
+      {
+        "input": "73 74 75 71 69 72 76 73",
+        "output": "1 1 4 2 1 1 0 0",
+        "explanation": "Day 3 (75) waits 4 days for 76."
+      },
+      {
+        "input": "30 40 50 60",
+        "output": "1 1 1 0",
+        "explanation": "Each day is answered by the next."
+      }
+    ],
+    "hints": [
+      "Push indices of unresolved days; pop them whenever a warmer day arrives."
+    ],
+    "solution": {
+      "code": "import sys\n\ntemps = list(map(int, sys.stdin.read().split()))\nanswer = [0] * len(temps)\nstack = []\nfor i, t in enumerate(temps):\n    while stack and temps[stack[-1]] < t:\n        j = stack.pop()\n        answer[j] = i - j\n    stack.append(i)\nprint(\" \".join(map(str, answer)))",
+      "explanation": "A decreasing stack of indices resolves each day the moment a warmer one appears.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)"
+    },
+    "tags": [
+      "stack",
+      "monotonic-stack"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "union_find",
+    "difficulty": "medium",
+    "title": "The Redundant Connection",
+    "description": "A tree of `n` nodes (labelled `1..n`) received one extra edge. Find the edge\nthat closes the cycle \u2014 the one that can be removed to restore a tree.\n\n**Input**: line 1 \u2014 `n`; next `n` lines \u2014 one edge `u v` each, in the order\nthey were added.\n\n**Output**: the cycle-closing edge as `u v`.",
+    "constraints": "3 <= n <= 10^5",
+    "examples": [
+      {
+        "input": "3\n1 2\n1 3\n2 3",
+        "output": "2 3",
+        "explanation": "Adding 2-3 closes the cycle 1-2-3."
+      },
+      {
+        "input": "5\n1 2\n2 3\n3 4\n1 4\n1 5",
+        "output": "1 4",
+        "explanation": "1-4 closes the cycle 1-2-3-4."
+      }
+    ],
+    "hints": [
+      "Union each edge; the first edge whose endpoints already share a root is the answer."
+    ],
+    "solution": {
+      "code": "import sys\n\nlines = sys.stdin.read().splitlines()\nn = int(lines[0])\nparent = list(range(n + 1))\n\ndef find(x):\n    while parent[x] != x:\n        parent[x] = parent[parent[x]]\n        x = parent[x]\n    return x\n\nfor i in range(1, n + 1):\n    u, v = map(int, lines[i].split())\n    ru, rv = find(u), find(v)\n    if ru == rv:\n        print(u, v)\n        break\n    parent[ru] = rv",
+      "explanation": "Union-find detects the first edge joining two already-connected nodes.",
+      "time_complexity": "O(n \u03b1(n))",
+      "space_complexity": "O(n)"
+    },
+    "tags": [
+      "graphs",
+      "union-find"
+    ]
+  }
+]

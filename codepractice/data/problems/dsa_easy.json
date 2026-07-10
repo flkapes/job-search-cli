@@ -1,0 +1,345 @@
+[
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "two_pointers",
+    "difficulty": "easy",
+    "title": "Two Sum in a Sorted Array",
+    "description": "Given a sorted array of integers and a target, find the two distinct positions\nwhose values add up to the target using the two-pointer technique.\n\n**Input**: line 1 \u2014 the sorted integers, space-separated; line 2 \u2014 the target.\n\n**Output**: the two 0-based indices in ascending order, space-separated,\nor `-1 -1` if no pair exists.",
+    "constraints": "2 <= n <= 10^5; exactly one valid pair when a solution exists",
+    "examples": [
+      {
+        "input": "2 7 11 15\n9",
+        "output": "0 1",
+        "explanation": "2 + 7 = 9."
+      },
+      {
+        "input": "1 2 3\n7",
+        "output": "-1 -1",
+        "explanation": "No pair sums to 7."
+      }
+    ],
+    "hints": [
+      "Start one pointer at each end of the array.",
+      "If the sum is too small, move the left pointer right; if too large, move the right pointer left."
+    ],
+    "solution": {
+      "code": "import sys\n\nlines = sys.stdin.read().splitlines()\nnums = list(map(int, lines[0].split()))\ntarget = int(lines[1])\n\ni, j = 0, len(nums) - 1\nwhile i < j:\n    s = nums[i] + nums[j]\n    if s == target:\n        print(i, j)\n        break\n    if s < target:\n        i += 1\n    else:\n        j -= 1\nelse:\n    print(-1, -1)",
+      "explanation": "Walk two pointers inward from both ends; the sorted order tells you which pointer to move.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(1)"
+    },
+    "tags": [
+      "arrays",
+      "two-pointers"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "sliding_window",
+    "difficulty": "easy",
+    "title": "Maximum Sum of a K-Window",
+    "description": "Find the maximum sum of any `k` consecutive elements.\n\n**Input**: line 1 \u2014 the integers, space-separated; line 2 \u2014 the window size `k`.\n\n**Output**: the maximum window sum.",
+    "constraints": "1 <= k <= n <= 10^5",
+    "examples": [
+      {
+        "input": "2 1 5 1 3 2\n3",
+        "output": "9",
+        "explanation": "The window [5, 1, 3] sums to 9."
+      },
+      {
+        "input": "1 1 1\n2",
+        "output": "2",
+        "explanation": "Every 2-window sums to 2."
+      }
+    ],
+    "hints": [
+      "Compute the first window's sum, then slide: add the entering element, subtract the leaving one."
+    ],
+    "solution": {
+      "code": "import sys\n\nlines = sys.stdin.read().splitlines()\nnums = list(map(int, lines[0].split()))\nk = int(lines[1])\n\ncurrent = sum(nums[:k])\nbest = current\nfor i in range(k, len(nums)):\n    current += nums[i] - nums[i - k]\n    best = max(best, current)\nprint(best)",
+      "explanation": "Maintain a running window sum instead of recomputing each window.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(1)"
+    },
+    "tags": [
+      "arrays",
+      "sliding-window"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "binary_search",
+    "difficulty": "easy",
+    "title": "Find the Target Index",
+    "description": "Locate a target value in a sorted array in logarithmic time.\n\n**Input**: line 1 \u2014 the sorted integers, space-separated; line 2 \u2014 the target.\n\n**Output**: the 0-based index of the target, or `-1` if absent.",
+    "constraints": "1 <= n <= 10^5; values are distinct",
+    "examples": [
+      {
+        "input": "-1 0 3 5 9 12\n9",
+        "output": "4",
+        "explanation": "9 is at index 4."
+      },
+      {
+        "input": "-1 0 3 5 9 12\n2",
+        "output": "-1",
+        "explanation": "2 is not in the array."
+      }
+    ],
+    "hints": [
+      "Compare the middle element with the target and discard half the array each step."
+    ],
+    "solution": {
+      "code": "import sys\n\nlines = sys.stdin.read().splitlines()\nnums = list(map(int, lines[0].split()))\ntarget = int(lines[1])\n\nlo, hi = 0, len(nums) - 1\nanswer = -1\nwhile lo <= hi:\n    mid = (lo + hi) // 2\n    if nums[mid] == target:\n        answer = mid\n        break\n    if nums[mid] < target:\n        lo = mid + 1\n    else:\n        hi = mid - 1\nprint(answer)",
+      "explanation": "Classic binary search: halve the search space on every comparison.",
+      "time_complexity": "O(log n)",
+      "space_complexity": "O(1)"
+    },
+    "tags": [
+      "arrays",
+      "binary-search"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "bfs",
+    "difficulty": "easy",
+    "title": "Breadth-First Visit Order",
+    "description": "Print the order in which BFS visits an undirected graph, exploring neighbors\nin ascending order.\n\n**Input**: line 1 \u2014 `n m` (nodes `0..n-1`, edge count); next `m` lines \u2014 one\nedge `u v` each; final line \u2014 the start node.\n\n**Output**: the visited nodes in BFS order, space-separated (unreachable\nnodes are not printed).",
+    "constraints": "1 <= n <= 10^4; 0 <= m <= 10^5",
+    "examples": [
+      {
+        "input": "4 3\n0 1\n0 2\n1 3\n0",
+        "output": "0 1 2 3",
+        "explanation": "Level order from node 0: {0}, {1, 2}, {3}."
+      },
+      {
+        "input": "3 1\n1 2\n1",
+        "output": "1 2",
+        "explanation": "Node 0 is unreachable from 1."
+      }
+    ],
+    "hints": [
+      "Use a queue and a visited set.",
+      "Sort each adjacency list so ties break toward smaller node ids."
+    ],
+    "solution": {
+      "code": "import sys\nfrom collections import deque\n\ntokens = iter(sys.stdin.read().split())\nn, m = int(next(tokens)), int(next(tokens))\nadj = [[] for _ in range(n)]\nfor _ in range(m):\n    u, v = int(next(tokens)), int(next(tokens))\n    adj[u].append(v)\n    adj[v].append(u)\nstart = int(next(tokens))\n\nfor neighbors in adj:\n    neighbors.sort()\n\nseen = {start}\nqueue = deque([start])\norder = []\nwhile queue:\n    node = queue.popleft()\n    order.append(node)\n    for nxt in adj[node]:\n        if nxt not in seen:\n            seen.add(nxt)\n            queue.append(nxt)\nprint(\" \".join(map(str, order)))",
+      "explanation": "A queue processes nodes level by level; the visited set prevents revisits.",
+      "time_complexity": "O(n + m log m)",
+      "space_complexity": "O(n + m)"
+    },
+    "tags": [
+      "graphs",
+      "bfs"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "dfs",
+    "difficulty": "easy",
+    "title": "Is There a Path?",
+    "description": "Decide whether two nodes are connected in an undirected graph using\ndepth-first search.\n\n**Input**: line 1 \u2014 `n m`; next `m` lines \u2014 one edge `u v` each; final\nline \u2014 the query `a b`.\n\n**Output**: `true` if a path from `a` to `b` exists, else `false`.",
+    "constraints": "1 <= n <= 10^4; 0 <= m <= 10^5",
+    "examples": [
+      {
+        "input": "3 2\n0 1\n1 2\n0 2",
+        "output": "true",
+        "explanation": "0 -> 1 -> 2."
+      },
+      {
+        "input": "4 1\n0 1\n2 3",
+        "output": "false",
+        "explanation": "Nodes 2 and 3 are in a different component."
+      }
+    ],
+    "hints": [
+      "Run DFS from the source with an explicit stack and stop early if you reach the destination."
+    ],
+    "solution": {
+      "code": "import sys\n\ntokens = iter(sys.stdin.read().split())\nn, m = int(next(tokens)), int(next(tokens))\nadj = [[] for _ in range(n)]\nfor _ in range(m):\n    u, v = int(next(tokens)), int(next(tokens))\n    adj[u].append(v)\n    adj[v].append(u)\na, b = int(next(tokens)), int(next(tokens))\n\nstack = [a]\nseen = {a}\nfound = False\nwhile stack:\n    node = stack.pop()\n    if node == b:\n        found = True\n        break\n    for nxt in adj[node]:\n        if nxt not in seen:\n            seen.add(nxt)\n            stack.append(nxt)\nprint(\"true\" if found else \"false\")",
+      "explanation": "Iterative DFS with a stack; connectivity is just reachability.",
+      "time_complexity": "O(n + m)",
+      "space_complexity": "O(n)"
+    },
+    "tags": [
+      "graphs",
+      "dfs"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "dynamic_programming",
+    "difficulty": "easy",
+    "title": "Climbing Stairs",
+    "description": "You climb a staircase of `n` steps taking 1 or 2 steps at a time. Count the\ndistinct ways to reach the top.\n\n**Input**: a single integer `n`.\n\n**Output**: the number of distinct ways.",
+    "constraints": "1 <= n <= 90",
+    "examples": [
+      {
+        "input": "2",
+        "output": "2",
+        "explanation": "1+1 or 2."
+      },
+      {
+        "input": "5",
+        "output": "8",
+        "explanation": "The answer follows the Fibonacci sequence."
+      }
+    ],
+    "hints": [
+      "ways(n) = ways(n-1) + ways(n-2).",
+      "You only ever need the previous two values."
+    ],
+    "solution": {
+      "code": "import sys\n\nn = int(sys.stdin.read().strip())\na, b = 1, 1  # ways(0), ways(1)\nfor _ in range(n - 1):\n    a, b = b, a + b\nprint(b)",
+      "explanation": "Bottom-up Fibonacci with two rolling variables.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(1)"
+    },
+    "tags": [
+      "dp"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "heap",
+    "difficulty": "easy",
+    "title": "Three Smallest Values",
+    "description": "Print the three smallest values of an array in ascending order using a heap.\n\n**Input**: the integers, space-separated, on one line.\n\n**Output**: the three smallest values in ascending order, space-separated.",
+    "constraints": "3 <= n <= 10^5; duplicates allowed",
+    "examples": [
+      {
+        "input": "5 1 8 2 9 3",
+        "output": "1 2 3",
+        "explanation": "The smallest three are 1, 2, 3."
+      },
+      {
+        "input": "4 4 2 7",
+        "output": "2 4 4",
+        "explanation": "Duplicates are kept."
+      }
+    ],
+    "hints": [
+      "heapify is O(n); popping three times is O(log n) each.",
+      "heapq.nsmallest does exactly this."
+    ],
+    "solution": {
+      "code": "import heapq\nimport sys\n\nnums = list(map(int, sys.stdin.read().split()))\nprint(\" \".join(map(str, heapq.nsmallest(3, nums))))",
+      "explanation": "A heap retrieves the k smallest items without fully sorting the array.",
+      "time_complexity": "O(n + k log n)",
+      "space_complexity": "O(n)"
+    },
+    "tags": [
+      "heap"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "prefix_sum",
+    "difficulty": "easy",
+    "title": "Range Sum Queries",
+    "description": "Answer inclusive range-sum queries over a fixed array in O(1) each after\nbuilding a prefix-sum table.\n\n**Input**: line 1 \u2014 the integers; line 2 \u2014 the query count `q`; next `q`\nlines \u2014 one query `l r` (0-based, inclusive) each.\n\n**Output**: one line per query with the range sum.",
+    "constraints": "1 <= n, q <= 10^5",
+    "examples": [
+      {
+        "input": "1 2 3 4 5\n2\n0 2\n1 3",
+        "output": "6\n9",
+        "explanation": "1+2+3 = 6 and 2+3+4 = 9."
+      },
+      {
+        "input": "10 -2\n1\n0 1",
+        "output": "8",
+        "explanation": "10 + (-2) = 8."
+      }
+    ],
+    "hints": [
+      "prefix[i] = sum of the first i elements; sum(l, r) = prefix[r+1] - prefix[l]."
+    ],
+    "solution": {
+      "code": "import sys\n\nlines = sys.stdin.read().splitlines()\nnums = list(map(int, lines[0].split()))\nq = int(lines[1])\n\nprefix = [0]\nfor x in nums:\n    prefix.append(prefix[-1] + x)\n\nout = []\nfor i in range(q):\n    l, r = map(int, lines[2 + i].split())\n    out.append(str(prefix[r + 1] - prefix[l]))\nprint(\"\\n\".join(out))",
+      "explanation": "Precompute cumulative sums once; each query becomes a subtraction.",
+      "time_complexity": "O(n + q)",
+      "space_complexity": "O(n)"
+    },
+    "tags": [
+      "arrays",
+      "prefix-sum"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "monotonic_stack",
+    "difficulty": "easy",
+    "title": "Next Greater Element",
+    "description": "For each element, find the first element to its right that is strictly\ngreater, using a monotonic stack.\n\n**Input**: the integers, space-separated, on one line.\n\n**Output**: for each position, the next greater value or `-1`, space-separated.",
+    "constraints": "1 <= n <= 10^5",
+    "examples": [
+      {
+        "input": "2 1 2 4 3",
+        "output": "4 2 4 -1 -1",
+        "explanation": "For the first 2 the next greater value is 4."
+      },
+      {
+        "input": "5 4 3",
+        "output": "-1 -1 -1",
+        "explanation": "Strictly decreasing arrays have no next greater elements."
+      }
+    ],
+    "hints": [
+      "Keep a stack of indices whose answer is unknown; pop while the current value is greater."
+    ],
+    "solution": {
+      "code": "import sys\n\nnums = list(map(int, sys.stdin.read().split()))\nresult = [-1] * len(nums)\nstack = []  # indices with unresolved answers\nfor i, value in enumerate(nums):\n    while stack and nums[stack[-1]] < value:\n        result[stack.pop()] = value\n    stack.append(i)\nprint(\" \".join(map(str, result)))",
+      "explanation": "Each index is pushed and popped at most once, giving linear time.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)"
+    },
+    "tags": [
+      "stack",
+      "monotonic-stack"
+    ]
+  },
+  {
+    "source": "static",
+    "category": "dsa",
+    "subcategory": "union_find",
+    "difficulty": "easy",
+    "title": "Count the Components",
+    "description": "Count connected components in an undirected graph with union-find\n(disjoint set union).\n\n**Input**: line 1 \u2014 `n m`; next `m` lines \u2014 one edge `u v` each.\n\n**Output**: the number of connected components.",
+    "constraints": "1 <= n <= 10^5; 0 <= m <= 2*10^5",
+    "examples": [
+      {
+        "input": "5 2\n0 1\n3 4",
+        "output": "3",
+        "explanation": "Components: {0,1}, {2}, {3,4}."
+      },
+      {
+        "input": "3 0",
+        "output": "3",
+        "explanation": "No edges \u2014 every node is its own component."
+      }
+    ],
+    "hints": [
+      "Every successful union reduces the component count by one.",
+      "Use path compression to keep find() nearly constant."
+    ],
+    "solution": {
+      "code": "import sys\n\ntokens = iter(sys.stdin.read().split())\nn, m = int(next(tokens)), int(next(tokens))\nparent = list(range(n))\n\ndef find(x):\n    while parent[x] != x:\n        parent[x] = parent[parent[x]]\n        x = parent[x]\n    return x\n\ncomponents = n\nfor _ in range(m):\n    u, v = int(next(tokens)), int(next(tokens))\n    ru, rv = find(u), find(v)\n    if ru != rv:\n        parent[ru] = rv\n        components -= 1\nprint(components)",
+      "explanation": "Start with n components; each union that joins two roots removes one.",
+      "time_complexity": "O(m \u03b1(n))",
+      "space_complexity": "O(n)"
+    },
+    "tags": [
+      "graphs",
+      "union-find"
+    ]
+  }
+]

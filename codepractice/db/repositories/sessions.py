@@ -45,8 +45,8 @@ class SessionRepository(BaseRepository):
         return self._insert(
             """INSERT INTO problem_attempts
                (session_id, problem_id, user_code, user_explanation, ai_feedback,
-                ai_score, time_spent_sec, hints_used, passed)
-               VALUES (?,?,?,?,?,?,?,?,?)""",
+                ai_score, time_spent_sec, hints_used, passed, language)
+               VALUES (?,?,?,?,?,?,?,?,?,?)""",
             (
                 data["session_id"],
                 data["problem_id"],
@@ -57,6 +57,7 @@ class SessionRepository(BaseRepository):
                 data.get("time_spent_sec", 0),
                 data.get("hints_used", 0),
                 1 if data.get("passed") else 0,
+                data.get("language", "python"),
             ),
         )
 
@@ -214,6 +215,18 @@ class SessionRepository(BaseRepository):
                                   ELSE 3.0
                               END) >= ?""",
                 (min_ratings, divergence),
+            )
+        )
+
+    def get_best_attempt_for_problem(self, problem_id: int) -> dict | None:
+        """The user's best attempt (highest score, then most recent) for a problem."""
+        return self.row_to_dict(
+            self._execute_one(
+                """SELECT * FROM problem_attempts
+                   WHERE problem_id = ? AND user_code != ''
+                   ORDER BY ai_score DESC, attempted_at DESC
+                   LIMIT 1""",
+                (problem_id,),
             )
         )
 

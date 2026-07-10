@@ -51,6 +51,11 @@ def suggest_next_difficulty(
     return current_difficulty
 
 
+def apply_peek_penalty(avg_score: float, peek_attempts: int, per_peek: float = 0.05) -> float:
+    """Deduct a fixed penalty per hint peek from a simulation's average score."""
+    return max(0.0, avg_score - per_peek * max(0, peek_attempts))
+
+
 def get_weak_areas(category_scores: list[dict]) -> list[str]:
     """Return categories/subcategories with lowest average scores."""
     scored = [

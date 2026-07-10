@@ -55,14 +55,25 @@ class ProfileContent(Widget):
                 yield Label("[bold]LLM Configuration[/bold]")
                 yield Label("Backend", classes="field-label")
                 yield Select(
-                    [("Ollama", "ollama"), ("LM Studio", "lmstudio")],
+                    [
+                        ("Ollama (local)", "ollama"),
+                        ("LM Studio (local)", "lmstudio"),
+                        ("Anthropic API (cloud)", "anthropic"),
+                        ("OpenAI-compatible (cloud)", "openai"),
+                    ],
                     value="ollama",
                     id="llm-backend",
                 )
                 yield Label("Model", classes="field-label")
-                yield Input(placeholder="e.g., llama3, codellama, deepseek-coder", id="llm-model")
-                yield Label("Base URL", classes="field-label")
+                yield Input(placeholder="e.g., llama3, codellama, claude-opus-4-8", id="llm-model")
+                yield Label("Base URL (local / OpenAI-compatible backends)", classes="field-label")
                 yield Input(placeholder="e.g., http://localhost:11434", id="llm-url")
+                yield Static(
+                    "[#8b949e]Cloud backends read their API key from "
+                    "ANTHROPIC_API_KEY / OPENAI_API_KEY in your .env — "
+                    "keys are never stored in the database.[/#8b949e]",
+                    id="llm-key-note",
+                )
 
                 with Horizontal():
                     yield Button("🔍 Test Connection", id="btn-test-llm", classes="secondary-btn")
@@ -125,6 +136,7 @@ class ProfileContent(Widget):
             # Reinitialize LLM client with new settings
             self.app._llm = None
             self.app._init_llm()
+            self.app.refresh_llm_status()
             self.query_one("#save-status", Static).update("[green]✓ Settings saved![/green]")
         except Exception as e:
             self.query_one("#save-status", Static).update(f"[red]✗ Error: {e}[/red]")

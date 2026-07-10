@@ -1,117 +1,49 @@
 # Next Sprint — Implementation Queue
 
-Features currently pending implementation, in rough priority order.
+Features queued for implementation, in priority order.
 
-> **Source of truth:** `ROADMAP.md` is aspirational and includes future ideas.
-> `README.md` reflects currently released capabilities.
-
----
-
-## Done (completed 2026-05-22)
-
-- ✅ **Offline Problem Cache** (`codepractice prefetch --count N`) with optional
-  `--category` and `--difficulty` filters.
-- ✅ **Session Replay** modal from Progress screen attempt rows.
-- ✅ **Personal Notes on Problems** persisted via `problems.user_notes`.
-- ✅ **Weak-Area Auto-Drill** (“Fix My Gaps” targeted drill flow).
-- ✅ **Daily Digest Command** (`codepractice digest`) with LLM-offline fallback.
-- ✅ **Progress Markdown Export** (`codepractice export --format md`).
-- ✅ **Code Diff / Suggested Approach View** using parsed `optimized_solution`.
-- ✅ **Per-Problem Personal Difficulty Rating** (1–5) stored on attempts.
-- ✅ **Freeform Interview Question Generation** (JD/Resume) with draft persistence.
-
-### Verification snapshot (code paths)
-
-- CLI commands: `codepractice/main.py` (`prefetch`, `digest`, `export`). 
-- Replay + weak-area drill UI: `codepractice/tui/screens/progress.py`.
-- Diff view + personal difficulty rating UI: `codepractice/tui/screens/practice.py`.
-- Freeform question UI + draft modal: `codepractice/tui/screens/job_desc.py`,
-  `codepractice/tui/screens/resume_drill.py`.
-- Persistence: migrations in `codepractice/db/migrations/005_*.sql`,
-  `006_*.sql`, `007_*.sql`; repositories in `codepractice/db/repositories/`.
+> **Where things live:** [`ROADMAP.md`](ROADMAP.md) is the long-range plan,
+> this file is the actionable queue, [`CHANGELOG.md`](CHANGELOG.md) records
+> what has shipped, and [`README.md`](README.md) documents current
+> capabilities.
 
 ---
 
-## 1. Interview Simulation Mode ✅ (completed 2026-05-22)
+## 1. Full Sandbox Isolation
 
-**Location:** Practice flow (new mode toggle)
+**Location:** `codepractice/utils/sandbox.py` + `code_runner.py`
 
-A timed, no-hints practice mode that mirrors real interview conditions.
+Resource limits (CPU, memory, file size) shipped in 0.2.0; true isolation
+is still open.
 
-**Implementation notes:**
-- Added dashboard entry for interview simulation mode
-- Added countdown timer + lock behavior with explicit finish action
-- Disabled hints in simulation mode and tracked peek attempts penalty
-- Added scorecard aggregation (attempted/solved/avg/category + pass/fail)
-- Stored sessions with `session_type = "interview_simulation"` and metadata
+- No-network execution for submitted code
+- Restricted filesystem visibility (namespaces/seccomp on Linux,
+  `sandbox-exec` on macOS)
+- Required before promoting shared problem imports beyond
+  trusted sources
 
----
+## 2. AI Mock Interviewer
 
-## 2. Gamification — XP & Achievements
+**Location:** chat service + interview simulation mode
 
-**Location:** Progress screen + attempt completion flow
+A conversational interviewer persona wrapped around the existing practice
+loop — the product's flagship differentiator.
 
-Keeps motivation high across long preparation streaks.
+- Presents the problem verbally and answers clarifying questions
+- Probes follow-ups: time complexity, space optimization, edge cases
+- Post-session transcript with rubric scoring (communication, correctness,
+  optimization, testing instincts)
 
-**Implementation notes:**
-- Add XP accrual rules by difficulty × score
-- Persist level + XP history in new tables
-- Add achievement unlock engine with milestone definitions
-- Show unlock toasts and an achievements gallery screen section
-- Add XP trend chart in Progress
+## 3. Vim / Emacs Keybindings
 
----
+**Location:** code editor + profile settings
 
-## 3. Goal Evolution Tracking
-
-**Location:** Learning Plan + Progress + CLI
-
-Makes the learning plan truly adaptive over time.
-
-**Implementation notes:**
-- Add `goal_history` persistence and retrieval
-- Add CLI command to update goal text and trigger plan evolution
-- Add "Update Goal" action in learning plan UI
-- Surface week-over-week drift summary in Progress
+- Standard / Vim / Emacs mode toggle in Settings, persisted per profile
+- `i`/`Esc` modal editing in Vim mode; core Emacs chords in Emacs mode
 
 ---
 
-## 4. Company-Specific Prep Profiles
-
-**Location:** New company browser + Learning Plan integrations
-
-Tailored problem sets for specific employers.
-
-**Implementation notes:**
-- Add `data/companies.json` with interview pattern metadata
-- Build searchable company browser view
-- One-click targeted plan generation from company profile
-- Integrate with JD flow for combined prep
-
----
-
-## 5. Multi-Language Practice Support
-
-**Location:** Practice screen + code runner + evaluator
-
-Extend beyond Python to common interview languages.
-
-**Implementation notes:**
-- Add language selector on problem card
-- Add runner/evaluator adapters for JavaScript and Go first
-- Extend prompting and syntax highlighting per language
-- Ensure persistence tracks chosen language per attempt
-
----
-
-## 6. Problem Bookmarking & Solution Library
-
-**Location:** Practice + new "My Library" screen
-
-Save and revisit favorite problems and your own solutions.
-
-**Implementation notes:**
-- Add bookmark toggle in problem card
-- Persist saved problem IDs and associated user solutions
-- Create library screen with filter/sort by tag/difficulty/category
-- Add side-by-side comparison with AI suggested solution
+For everything already shipped — including the 2026-07-08 sprint
+(verified test cases, gamification, bookmarks, cloud backends, company
+profiles, custom problems, multi-language practice, flicker-free
+streaming) — see [`CHANGELOG.md`](CHANGELOG.md).

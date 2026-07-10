@@ -46,6 +46,8 @@ class CodeEditor(Widget):
             self.code = code
             super().__init__()
 
+    _language_id: str = "python"
+
     def compose(self) -> ComposeResult:
         yield Label("  ✎ solution.py — [dim]Ctrl+Enter to submit[/dim]", id="editor-header")
         yield TextArea(
@@ -55,6 +57,29 @@ class CodeEditor(Widget):
             show_line_numbers=True,
             id="code-input",
         )
+
+    def set_language(self, language_id: str) -> None:
+        """Switch syntax highlighting and the header filename to another language."""
+        from codepractice.utils.languages import get_language
+
+        spec = get_language(language_id)
+        self._language_id = spec.id
+        self.query_one("#editor-header", Label).update(
+            f"  ✎ {spec.file_name} — [dim]Ctrl+Enter to submit[/dim]"
+        )
+        area = self.query_one("#code-input", TextArea)
+        try:
+            area.language = spec.editor_language
+        except Exception:
+            # Grammar not bundled — keep editing with no highlighting.
+            try:
+                area.language = None
+            except Exception:
+                pass
+
+    @property
+    def language(self) -> str:
+        return self._language_id
 
     def get_code(self) -> str:
         return self.query_one("#code-input", TextArea).text
